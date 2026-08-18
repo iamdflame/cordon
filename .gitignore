@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.hydra-data/
+.cache/
+.env
+.env.local
+*.log
+.DS_Store
+web/dist/
+web/node_modules/
+data/*.json
+.tmp/
+voiceover/
+web/tsconfig.tsbuildinfo
