@@ -12,3 +12,5 @@ data/*.json
 .tmp/
 voiceover/
 web/tsconfig.tsbuildinfo
+data/
+cordon_plan.md
