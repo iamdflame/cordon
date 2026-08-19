@@ -1,0 +1,358 @@
+/* ============================================================================
+   Cordon design system
+
+   The subject is disclosure: who may know what. The visual language is taken
+   from the document that has always had to express exactly that - the redacted
+   file. Admitted knowledge is plain and readable; withheld knowledge is present
+   but struck out, with the reason attached, because a system that silently
+   returns less is indistinguishable from one that is broken.
+
+   Institutional rather than decorative. One warm accent for the permission
+   trace, one red for refusal, everything else a cold neutral ramp.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ground: #08090b;
+  --surface: #0d0f13;
+  --raised: #12151b;
+  --overlay: #171b22;
+
+  --line: #1d222a;
+  --line-bright: #2a313c;
+
+  --text: #e9ecf1;
+  --text-2: #98a1af;
+  --text-3: #5d6675;
+  --text-4: #3b424d;
+
+  /* Permitted. */
+  --grant: #3d9a63;
+  --grant-soft: rgba(61, 154, 99, 0.12);
+
+  /* Refused. */
+  --deny: #e5484d;
+  --deny-soft: rgba(229, 72, 77, 0.12);
+
+  /* The permission trace. */
+  --trace: #ffc95c;
+  --trace-dim: #8a6a24;
+
+  --radius: 3px;
+  --radius-lg: 6px;
+
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 260 260' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection { background: var(--trace); color: #000; }
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-bright);
+  border-radius: 99px;
+  border: 2px solid var(--ground);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
+
+.mono { font-family: var(--mono); font-variant-ligatures: none; }
+.num { font-variant-numeric: tabular-nums; }
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ================================ shell ================================== */
+
+.app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  height: 54px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  z-index: 20;
+}
+
+.brand { display: flex; align-items: baseline; gap: 11px; }
+.brand-mark { font-size: 17px; font-weight: 700; letter-spacing: -0.025em; }
+.brand-mark::first-letter { color: var(--trace); }
+.brand-tag { font-size: 11px; color: var(--text-3); }
+
+.masthead-right { display: flex; align-items: center; gap: 18px; }
+.pill {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; color: var(--text-2); font-family: var(--mono);
+}
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--grant); box-shadow: 0 0 0 3px var(--grant-soft);
+}
+.dot.off { background: var(--deny); box-shadow: 0 0 0 3px var(--deny-soft); }
+
+.shell {
+  display: grid;
+  grid-template-columns: 330px 1fr 380px;
+  min-height: 0;
+  height: 100%;
+}
+@media (max-width: 1420px) { .shell { grid-template-columns: 290px 1fr 330px; } }
+
+.pane { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.pane-left { border-right: 1px solid var(--line); background: var(--surface); }
+.pane-right { border-left: 1px solid var(--line); background: var(--surface); }
+.pane-body { overflow-y: auto; flex: 1; min-height: 0; }
+
+.block { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 9px;
+}
+
+/* =============================== controls ================================ */
+
+button { font-family: inherit; font-size: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 14px; border-radius: var(--radius);
+  border: 1px solid var(--line-bright); background: var(--raised);
+  color: var(--text); font-size: 12px; font-weight: 500;
+  transition: background 160ms var(--spring), border-color 160ms var(--spring), transform 140ms var(--spring);
+}
+.btn:hover:not(:disabled) { background: var(--overlay); border-color: var(--text-4); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--trace); outline-offset: 2px; }
+
+.btn-primary {
+  background: var(--trace); border-color: var(--trace);
+  color: #120d02; font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) { background: #ffd47e; border-color: #ffd47e; }
+
+.field {
+  width: 100%;
+  background: var(--ground);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-family: var(--sans);
+  outline: none;
+  transition: border-color 160ms var(--spring);
+}
+.field:focus { border-color: var(--trace-dim); }
+.field::placeholder { color: var(--text-4); }
+
+/* ============================== principals =============================== */
+
+.person {
+  display: block; width: 100%; text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(29, 34, 42, 0.6);
+  border-left: 2px solid transparent;
+  transition: background 140ms var(--spring), border-left-color 140ms var(--spring);
+}
+.person:hover { background: var(--raised); }
+.person.active { background: var(--raised); border-left-color: var(--trace); }
+
+.person-name { font-size: 12.5px; font-weight: 500; }
+.person-role { font-size: 10.5px; color: var(--text-3); margin-top: 1px; }
+.person-access {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+}
+.chip {
+  font-family: var(--mono); font-size: 9px;
+  padding: 1px 5px; border-radius: 2px;
+  border: 1px solid var(--line-bright); color: var(--text-3);
+}
+.chip.granted { color: #7fd1a0; border-color: rgba(61, 154, 99, 0.4); background: var(--grant-soft); }
+
+/* ================================ results ================================ */
+
+.results { padding: 0 0 24px; }
+
+.result-head {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 14px 20px 10px;
+  position: sticky; top: 0;
+  background: var(--ground);
+  border-bottom: 1px solid var(--line);
+  z-index: 3;
+}
+
+.asking {
+  font-size: 12px; color: var(--text-2);
+}
+.asking strong { color: var(--text); font-weight: 600; }
+
+.fact {
+  padding: 13px 20px;
+  border-bottom: 1px solid rgba(29, 34, 42, 0.55);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: background 140ms var(--spring);
+}
+.fact:hover { background: var(--raised); }
+.fact.selected { background: var(--raised); border-left-color: var(--trace); }
+
+.fact.admitted { border-left-color: rgba(61, 154, 99, 0.5); }
+.fact.withheld { border-left-color: rgba(229, 72, 77, 0.55); }
+
+.fact-text { font-size: 12.5px; line-height: 1.55; color: var(--text); }
+
+/*
+ * Redaction.
+ *
+ * The withheld fact stays in place, struck through and dimmed, so the reader
+ * can see that something was refused and why. Hiding it entirely would make a
+ * correct refusal look identical to an empty index.
+ */
+.fact.withheld .fact-text {
+  color: var(--text-4);
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(229, 72, 77, 0.06) 0 6px,
+    transparent 6px 12px
+  );
+  text-decoration: line-through;
+  text-decoration-color: rgba(229, 72, 77, 0.5);
+}
+
+.fact-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-top: 7px; font-family: var(--mono); font-size: 10px; color: var(--text-3);
+}
+
+.verdict {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.09em;
+  padding: 2px 6px; border-radius: 2px; text-transform: uppercase;
+}
+.verdict.ok { color: #7fd1a0; background: var(--grant-soft); border: 1px solid rgba(61,154,99,0.4); }
+.verdict.no { color: #ff8f92; background: var(--deny-soft); border: 1px solid rgba(229,72,77,0.42); }
+
+.missing-note {
+  margin-top: 6px; font-size: 11px; color: #ff8f92; line-height: 1.5;
+}
+.missing-note code {
+  font-family: var(--mono); font-size: 10.5px;
+  background: var(--deny-soft); padding: 1px 4px; border-radius: 2px;
+}
+
+/* ============================ permission trace =========================== */
+
+.trace-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 5px 0; font-size: 11.5px;
+}
+.trace-key { color: var(--text-3); }
+.trace-val { font-family: var(--mono); color: var(--text-2); }
+
+.set {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px;
+}
+
+.derivation { position: relative; padding-left: 4px; }
+.deriv-step { position: relative; padding: 0 0 14px 22px; }
+.deriv-step::before {
+  content: ''; position: absolute; left: 4px; top: 13px; bottom: 0;
+  width: 1px; background: var(--trace-dim);
+}
+.deriv-step:last-child::before { display: none; }
+.deriv-dot {
+  position: absolute; left: 0; top: 4px;
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 2px solid var(--trace); background: var(--ground);
+}
+.deriv-step.is-source .deriv-dot { background: var(--trace); }
+.deriv-kind {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 2px;
+}
+.deriv-text { font-size: 11.5px; line-height: 1.5; color: var(--text-2); }
+
+/* =============================== readout ================================= */
+
+.readout { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.readout-cell { padding: 13px 14px 12px; border-right: 1px solid var(--line); }
+.readout-cell:last-child { border-right: none; }
+.readout-value {
+  font-family: var(--mono); font-size: 23px; font-weight: 600;
+  letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums;
+}
+.readout-label {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-3); margin-top: 4px;
+}
+
+.stat-row { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 0; font-size: 11.5px; }
+.stat-key { color: var(--text-3); }
+.stat-val { font-family: var(--mono); color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* =============================== states ================================== */
+
+.centre {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 18px; padding: 40px; text-align: center;
+}
+.headline {
+  font-size: clamp(36px, 5.4vw, 68px); font-weight: 700;
+  letter-spacing: -0.045em; line-height: 0.98;
+}
+.headline em { font-style: normal; color: var(--trace); }
+.sub { font-size: 14px; color: var(--text-2); max-width: 640px; line-height: 1.6; }
+.sub strong { color: var(--text); font-weight: 500; }
+
+.spinner {
+  width: 22px; height: 22px;
+  border: 2px solid var(--line-bright); border-top-color: var(--trace);
+  border-radius: 50%; animation: spin 900ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty { padding: 34px 20px; text-align: center; color: var(--text-3); font-size: 12px; line-height: 1.6; }
+
+.fade-up { animation: fadeUp 360ms var(--spring) both; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
