@@ -1,0 +1,166 @@
+{
+  "owner": "iamdflame",
+  "fetchedAt": "2026-08-19T09:50:05.863Z",
+  "repos": [
+    {
+      "name": "cordon-demo-atlas",
+      "fullName": "iamdflame/cordon-demo-atlas",
+      "private": true,
+      "description": "Cordon demo fixture — permission-propagating knowledge graph",
+      "collaborators": [
+        "iamdflame"
+      ]
+    },
+    {
+      "name": "cordon-demo-borealis",
+      "fullName": "iamdflame/cordon-demo-borealis",
+      "private": true,
+      "description": "Cordon demo fixture — permission-propagating knowledge graph",
+      "collaborators": [
+        "iamdflame"
+      ]
+    },
+    {
+      "name": "cordon-demo-handbook",
+      "fullName": "iamdflame/cordon-demo-handbook",
+      "private": false,
+      "description": "Cordon demo fixture — permission-propagating knowledge graph",
+      "collaborators": [
+        "iamdflame"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "repo": "cordon-demo-atlas",
+      "number": 4,
+      "title": "Rollback rehearsal",
+      "body": "Priya Raman ran the rollback rehearsal. Marcus Vale verified the ledger snapshots restore cleanly.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:45Z",
+      "url": "https://github.com/iamdflame/cordon-demo-atlas/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-atlas",
+      "number": 3,
+      "title": "Freeze window confirmed with Finance",
+      "body": "Finance signed off. Priya Raman confirmed the freeze window. Do not share outside this repo until the customer comms draft is approved.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:43Z",
+      "url": "https://github.com/iamdflame/cordon-demo-atlas/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-atlas",
+      "number": 2,
+      "title": "Reconciliation drift on legacy accounts",
+      "body": "Marcus Vale found a 0.4% drift on pre-2024 accounts. Priya Raman confirmed this blocks the cutover.\nAssigning to Marcus with Priya as reviewer.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:41Z",
+      "url": "https://github.com/iamdflame/cordon-demo-atlas/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-atlas",
+      "number": 1,
+      "title": "Cutover plan for the billing ledger migration",
+      "body": "Priya Raman is leading the ledger cutover. We agreed the freeze window is the last week of September.\nMarcus Vale will own the reconciliation checks. Priya asked that we not announce the date externally until Finance signs off.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:39Z",
+      "url": "https://github.com/iamdflame/cordon-demo-atlas/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-borealis",
+      "number": 4,
+      "title": "Integration sequencing",
+      "body": "Priya Raman proposed sequencing integration after the ledger freeze lifts. Elena Fischer agreed.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:52Z",
+      "url": "https://github.com/iamdflame/cordon-demo-borealis/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-borealis",
+      "number": 3,
+      "title": "Data room access list",
+      "body": "Elena Fischer maintains the access list. Priya Raman approved adding two engineers.\nDo not reference the target company name outside this repo.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:50Z",
+      "url": "https://github.com/iamdflame/cordon-demo-borealis/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-borealis",
+      "number": 2,
+      "title": "Northwind infra assessment",
+      "body": "Priya Raman completed the infra assessment. Elena Fischer flagged two licensing risks.\nPriya notes the timeline depends on the billing work landing first.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:49Z",
+      "url": "https://github.com/iamdflame/cordon-demo-borealis/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-borealis",
+      "number": 1,
+      "title": "Diligence checklist for the Northwind acquisition",
+      "body": "Priya Raman is the technical lead on diligence. Target close is October.\nElena Fischer is handling the data-room review. This is need-to-know.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:46Z",
+      "url": "https://github.com/iamdflame/cordon-demo-borealis/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 5,
+      "title": "Handbook: who to ask about infrastructure reviews",
+      "body": "For questions about infrastructure review process, ask Priya Raman or Elena Fischer. This page is public and intentionally contains no project detail.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:49:45Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/5",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 4,
+      "title": "Handbook: migration freeze windows — owner",
+      "body": "Priya Raman owns this page and reviews changes to it. General guidance only; no project specifics here.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:49:43Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 3,
+      "title": "Handbook: writing incident reports",
+      "body": "Template and expectations for incident reports.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:58Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 2,
+      "title": "Handbook: reviewing infrastructure changes",
+      "body": "How we assess infrastructure changes and who reviews what. General process only.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:56Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 1,
+      "title": "Engineering handbook: how we run migrations",
+      "body": "General guidance on planning migrations, freeze windows and rollback rehearsals. No project specifics.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T09:42:54Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/1",
+      "comments": []
+    }
+  ],
+  "teams": []
+}
