@@ -108,9 +108,15 @@ extraction, entity resolution, derivation, ingest and the admissibility rule are
 the same code, unchanged.
 
 A person named in the public handbook *and* in both private repositories
-produces a derived fact that a document-level gate discloses to the anonymous
-internet. Cordon withholds it. The audit then requests the underlying source
-without credentials:
+produces a derived fact that rests on all three. A document-level gate
+discloses it to the anonymous internet — because the asker holds one of the
+three, which is all such a gate asks. Cordon withholds it.
+
+All three of the pairs that must be withheld in this snapshot **flip** depending
+on which of the fact's own sources the node is attributed to, which is the
+finding above reproduced on permissions we did not write.
+
+The audit then requests the underlying source without credentials:
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}'     https://api.github.com/repos/iamdflame/cordon-demo-borealis/issues/4
