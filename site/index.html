@@ -513,11 +513,16 @@
     </p>
 
     <div class="terminal">
-      <span class="prompt">$</span> <span class="cmd">curl -s -o /dev/null -w '%{http_code}' \
-        https://github.com/cordon-demo/cordon-demo-fornax/issues/2</span>
+      <span class="note"># the public repository in the same organisation</span>
+      <span class="prompt">$</span> <span class="cmd">curl -so /dev/null -w '%{http_code}' https://github.com/cordon-demo/cordon-demo-handbook</span>
+      <span style="color:var(--admit);font-size:22px;font-weight:600;display:block;margin:6px 0 12px">200</span>
+      <span class="note"># the private one, holding the evidence underneath the fact</span>
+      <span class="prompt">$</span> <span class="cmd">curl -so /dev/null -w '%{http_code}' https://github.com/cordon-demo/cordon-demo-fornax/issues/2</span>
       <span class="out-404">404</span>
-      <span class="note">GitHub refuses to show the document.
-A document-level gate hands over the fact derived from it.</span>
+      <span class="note">Same org, same request, no credentials either time.
+The 404 is about permission, not existence.
+GitHub refuses to show the document &mdash; a document-level gate
+hands over the fact derived from it.</span>
     </div>
 
     <p class="body-text">

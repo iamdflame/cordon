@@ -266,16 +266,20 @@ anonymous GET returned 404                         26
 ```
 
 **26/26.** Not our model of access control — GitHub's server, answering a
-request anyone can make:
+request anyone can make. Run both, in the same organisation, with no
+credentials either time:
 
 ```
-$ curl -s -o /dev/null -w '%{http_code}' \
-    https://github.com/cordon-demo/cordon-demo-fornax/issues/2
+$ curl -so /dev/null -w '%{http_code}' https://github.com/cordon-demo/cordon-demo-handbook
+200
+
+$ curl -so /dev/null -w '%{http_code}' https://github.com/cordon-demo/cordon-demo-fornax/issues/2
 404
 ```
 
-GitHub refuses to show the document. A document-level gate hands over the fact
-derived from it.
+The pair is the point: **the 404 is about permission, not existence.** GitHub
+refuses to show the document. A document-level gate hands over the fact derived
+from it.
 
 > The check deliberately uses `github.com` rather than `api.github.com`. The
 > unauthenticated API allows 60 requests an hour and then answers **403** to

@@ -17,25 +17,32 @@ There are four parts to this document:
 
 ## 0. Before you start
 
-Get the app running and leave it running:
-
-```bash
-npm run hydra:up
-npm run api            # wait until it prints "cordon ready"
-cd web && npm run dev  # leave this running
-```
+You no longer need to run anything locally for the console — it is hosted, live,
+and backed by a real HydraDB instance. You only need a terminal for the audits.
 
 Open these and leave them open, each in its own window:
 
 | Window | What | Why |
 |---|---|---|
-| A | Firefox/Chrome at `localhost:5173` | the console |
-| B | Terminal, in the project folder | for running `npm run demo:leak` |
-| C | Firefox/Chrome at `docs/RESULTS.md` on GitHub | the numbers |
+| A | [cordon-graph.vercel.app/console](https://cordon-graph.vercel.app/console) | the console — wait for the green **Live** badge |
+| B | Terminal, in the project folder | for `npm run attack` and `npm run audit:github` |
+| C | [docs/RESULTS.md](https://github.com/iamdflame/cordon/blob/main/docs/RESULTS.md) on GitHub | the numbers |
 | D | Firefox/Chrome, **private/incognito window** | for the 404 |
 
-Window D matters. It must be a **private window** and you must be **logged out
-of GitHub in it**. That is what makes the 404 real rather than staged.
+Two things to check before you record:
+
+**Window A must show the green "Live" badge.** If it says "Verified transcript",
+the backend container is cold — reload once and give it fifteen seconds. The
+transcript is honest, but "live" is a stronger thing to film.
+
+**Window D must be a private window, logged out of GitHub.** That is what makes
+the 404 real rather than staged.
+
+The terminal needs HydraDB and the GitHub snapshot, which need no credentials:
+
+```bash
+npm run hydra:up
+```
 
 Do a dry run of every click before you record anything. You want to be bored by
 the time you hit record.
@@ -292,13 +299,15 @@ Press Enter. Let it print completely. Do not scroll while it prints. When it
 finishes, wait three seconds, then slowly scroll up to the top of the output and
 back down.
 
-**Shot 3 — `shot3-console-toggle.mp4`** (needs ~25 seconds)
+**Shot 3 — `shot3-console-toggle.mp4`** (needs ~30 seconds)
 
-Window A, the console. Pick the hero question. Click the first principal —
-pause three seconds so the answer is readable. Click the second principal —
-pause three seconds. Then move the mouse to the withheld panel and hover over
-the missing spaces. Move the mouse slowly and deliberately; fast mouse movement
-looks panicked.
+Window A, the live console. Start on `team:sdk` in the left rail — pause three
+seconds so the summary strip is readable. Click `team:billing` — pause three
+seconds and let the verdict chips visibly flip. Then click one fact with an
+amber stripe to expand it, and let the derivation chain and the *"This is the
+leak"* callout sit on screen for four seconds.
+
+Move the mouse slowly and deliberately; fast mouse movement looks panicked.
 
 **Shot 4 — `shot4-results.mp4`** (needs ~55 seconds)
 
@@ -315,17 +324,36 @@ Window B, the terminal, cleared. Type:
 npm run audit:github
 ```
 
-Let it run to the end. It prints the three repositories, the pipeline, the
-disclosure table, and finally the live 404. When it stops, wait three seconds.
+Let it run to the end. It prints the eight repositories, the pipeline, the
+disclosure table, the 26/26 assertion pass, and finally the live 404. When it
+stops, wait three seconds.
 
-Then — still recording — switch to **window D, the private window**, and paste
-the private repository URL:
+Then — still recording — switch to **window D, the private window**, and do
+*both* of these, in this order. The pair is the point: one 404, one 200, same
+organisation.
+
+First the public repository:
 
 ```
-https://github.com/iamdflame/cordon-demo-borealis
+https://github.com/cordon-demo/cordon-demo-handbook
 ```
 
-Press Enter. GitHub shows its 404 page. Sit on it for four seconds.
+It loads. Sit on it for two seconds.
+
+Then the private one:
+
+```
+https://github.com/cordon-demo/cordon-demo-borealis
+```
+
+GitHub shows its 404 page. Sit on it for four seconds.
+
+> **Get this URL exactly right.** The repositories live under the
+> **`cordon-demo` organisation**, not under a personal account. A URL pointing
+> anywhere else also 404s — but because the repository does not exist, not
+> because you are not allowed to see it. That is the same picture for the wrong
+> reason, and a judge who checks will find it. Showing the public repo loading
+> first is what proves the 404 is about permission rather than existence.
 
 That switch, in one unbroken take, is the single most convincing four seconds in
 the video. Do not cut between the terminal and the browser here — the fact that
