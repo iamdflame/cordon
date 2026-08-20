@@ -60,7 +60,14 @@ function extractQueries(file: string): Found[] {
   const lines = text.split('\n');
   const found: Found[] = [];
 
-  const KEYWORD = /\b(MATCH|CREATE|MERGE|UNWIND)\b/;
+  /*
+   * A real Cypher clause is always followed by a pattern or a parameter:
+   * `MATCH (`, `CREATE (`, `UNWIND $`. Requiring that distinguishes a query
+   * from *prose about* a query - a table label reading "MATCH RESTS_ON*1..5"
+   * is documentation, and linting it produces noise that gets the linter
+   * switched off.
+   */
+  const KEYWORD = /\b(MATCH|CREATE|MERGE)\s*\(|\bUNWIND\s*\$/;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!;
     // Only string literals, so prose in comments is not linted.
