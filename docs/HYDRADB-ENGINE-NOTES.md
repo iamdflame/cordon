@@ -1,4 +1,15 @@
-# HydraDB OSS Engine — verified capability map
+# HydraDB capability map
+
+What the OSS engine does, what it does not, and what it cost us to find out.
+Written while hitting each limit, so the next person hits none of them.
+
+**Filed upstream**, with reproductions:
+
+| # | issue | severity |
+|---|---|---|
+| [115](https://github.com/hydra-db/hydradb/issues/115) | Results silently truncate at 1024 rows; continuation cursor returns an empty page | **high** — fails open-looking in an authorization path |
+| [116](https://github.com/hydra-db/hydradb/issues/116) | No batch write path for labelled nodes; sustained write pressure exits the node | medium |
+| [117](https://github.com/hydra-db/hydradb/issues/117) | Five OpenCypher subset constraints, and one silent write failure | low / documentation |
 
 Empirically probed against `ghcr.io/hydra-db/hydradb:latest` (v0.1.0) on 2026-08-18.
 The published README advertises "a practical OpenCypher subset"; this documents what
@@ -100,23 +111,43 @@ the engine could make for this workload.
 Three engine behaviours that changed the architecture. All were discovered by
 measurement; none are documented upstream.
 
-## 1. Results are capped at 1024 rows, and cursors expire immediately
+## 1. Results are capped at 1024 rows, and the continuation cursor returns nothing
 
 A query over the 1,371 access-control edges returned **exactly 1,024 rows** plus
 `next_cursor`, silently dropping a quarter of the authorisation table. No error,
 no warning.
 
+Re-verified on a 38,570-node graph, and the behaviour is sharper than we first
+recorded it:
+
 ```
-MATCH (p:Principal)-[:MEMBER_OF]->(sp:Space) RETURN p.eid, sp.name
-  -> rows: 1024   next_cursor: 2
-MATCH (p:Principal)-[:MEMBER_OF]->(sp:Space) RETURN count(*)
-  -> 1371
+MATCH (n:Source) RETURN count(*)          -> 38570
+MATCH (n:Source) RETURN n.space           -> rows: 1024, next_cursor: 1
+  ...same query with cursor: 1            -> rows: 0,    next_cursor: null
+MATCH (n:Source) RETURN n.space LIMIT 2000-> rows: 1024, next_cursor: 2
+MATCH (n:Source) RETURN n.space SKIP 1024 LIMIT 500
+                                          -> rows: 500,  next_cursor: null
 ```
 
-Passing the cursor back fails: `result cursor is unknown or expired`. The
-parameter names `offset`, `page_token` and `start` are silently ignored (they
-return the first page again), which makes it easy to believe pagination is
-working when it is not.
+Three separate problems, in descending nastiness:
+
+1. **The cap is silent.** 1,024 of 38,570 rows, and the response is shaped
+   exactly like a complete one.
+2. **The continuation cursor yields nothing.** Passing `cursor: 1` back with the
+   same query returns *zero* rows and no further cursor, so the remaining 37,546
+   rows are simply unreachable through the documented mechanism. (`cursor` also
+   requires `query` to be resent; sending it alone is a deserialisation error,
+   and sending it as a string rather than a number is another.)
+3. **An explicit `LIMIT 2000` is silently capped to 1,024** rather than
+   honoured or rejected.
+
+`SKIP`/`LIMIT` *does* page correctly, so a workaround exists — but you have to
+know the cap is there to go looking for it.
+
+**Correction to an earlier draft of this note:** we originally wrote that the
+cursor "expires" and that `offset`/`page_token`/`start` return the first page
+again. Re-testing shows the cursor returns an empty page rather than an
+expiry error, and that `SKIP`/`LIMIT` works. The corrected behaviour is above.
 
 **Consequence.** `HydraClient.queryComplete()` throws when a result lands on the
 cap with a continuation pending, so an incomplete answer can never masquerade as

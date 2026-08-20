@@ -623,14 +623,20 @@ A document-level gate hands over the fact derived from it.</span>
       <div class="stat-cell"><span class="k">Graph</span><span class="v">95,898</span><span class="n">nodes &middot; 226,357 edges</span></div>
       <div class="stat-cell"><span class="k">Invariant</span><span class="v cool">0</span><span class="n">violations in 330,190 pairs</span></div>
       <div class="stat-cell"><span class="k">Entity resolution</span><span class="v warm">100%</span><span class="n">precision &middot; 99% recall, no LLM</span></div>
-      <div class="stat-cell"><span class="k">Engine bug found</span><span class="v warm">1,024</span><span class="n">silent row-cap in an ACL query</span></div>
+      <div class="stat-cell"><span class="k">Filed upstream</span><span class="v warm">3</span><span class="n">issues, with reproductions</span></div>
     </div>
 
     <p class="body-text">
+      Building this, we probed what the OpenCypher subset actually supports and found queries
+      <strong>silently truncating at 1,024 rows</strong> with no error &mdash; which for a security
+      system means a quarter of an authorization table disappearing quietly. Our client fails
+      closed on it. All three findings are filed upstream with reproductions:
+      <a href="https://github.com/hydra-db/hydradb/issues/115">#115</a>,
+      <a href="https://github.com/hydra-db/hydradb/issues/116">#116</a>,
+      <a href="https://github.com/hydra-db/hydradb/issues/117">#117</a>.
       We also publish <strong>what does not run in the engine</strong>: the transitive org closure
-      is application-side, because a variable-length pattern composed with one further fixed hop
-      times out at 30s while the variable-length half alone takes 287ms. A reviewer who finds that
-      themselves reads it as a hole; measured and published, it is a capability map.
+      is application-side, because variable-length traversal requires a fixed source id. A reviewer
+      who finds that themselves reads it as a hole; measured and published, it is a capability map.
     </p>
   </section>
 

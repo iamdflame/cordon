@@ -191,6 +191,13 @@ query is the worst failure mode available**: it fails open, and it looks exactly
 like success. Our client now refuses to accept a truncated result that carries a
 continuation cursor.
 
+All three are **filed upstream with reproductions**, because a bug found and not
+reported is a bug the next person finds too:
+
+- [hydra-db/hydradb#115](https://github.com/hydra-db/hydradb/issues/115) — results silently truncate at 1024 rows; continuation cursor returns an empty page
+- [hydra-db/hydradb#116](https://github.com/hydra-db/hydradb/issues/116) — no batch write path for labelled nodes; sustained write pressure exits the node
+- [hydra-db/hydradb#117](https://github.com/hydra-db/hydradb/issues/117) — five OpenCypher subset constraints, and one silent write failure
+
 We also publish **what does not run in the engine.** The requirement traversal —
 the walk the whole thesis rests on — runs in HydraDB, per asker, at query time.
 The transitive org closure is application-side, because of row two above. A
