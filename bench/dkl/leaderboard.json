@@ -1,0 +1,69 @@
+{
+  "benchmark": "DKL — derived-knowledge leakage",
+  "version": "0.1.0",
+  "note": "Every entry names the command that reproduces it. Submit a result by opening a PR that adds one.",
+  "entries": [
+    {
+      "corpus": "HERB",
+      "corpusNote": "Salesforce HERB, 530 employees, 30 product spaces, 38,600 artifacts, used unmodified",
+      "system": "ungated",
+      "trials": 18168,
+      "leakRate": 1.0,
+      "leakedUnits": 440838,
+      "answerF1": 0.075,
+      "falseDenials": 0,
+      "attributionFlips": null,
+      "reproduce": "npm run audit"
+    },
+    {
+      "corpus": "HERB",
+      "system": "document-acl",
+      "trials": 18168,
+      "leakRate": 0.174,
+      "leakedUnits": 10617,
+      "answerF1": 0.099,
+      "falseDenials": 0,
+      "attributionFlips": { "flipped": 1008, "considered": 7280 },
+      "leaksByLevel": { "0": 0, "1": 3626, "2": 400, "3": 6591 },
+      "reproduce": "npm run audit"
+    },
+    {
+      "corpus": "HERB",
+      "system": "derivation-aware",
+      "trials": 18168,
+      "leakRate": 0.0,
+      "leakedUnits": 0,
+      "answerF1": 0.099,
+      "falseDenials": 0,
+      "attributionFlips": { "flipped": 0, "considered": 7280 },
+      "leaksByLevel": { "0": 0, "1": 0, "2": 0, "3": 0 },
+      "reproduce": "npm run audit"
+    },
+    {
+      "corpus": "GitHub",
+      "corpusNote": "cordon-demo org: 8 repositories (5 private, 3 public), 11 nested teams as principals. Permissions fetched from the API, not modelled.",
+      "system": "document-acl (filed-under)",
+      "pairs": 1118,
+      "leakedUnits": 105,
+      "attributionFlips": { "flipped": 292, "considered": 309 },
+      "reproduce": "npm run audit:github"
+    },
+    {
+      "corpus": "GitHub",
+      "system": "document-acl (any-source)",
+      "pairs": 1118,
+      "leakedUnits": 292,
+      "attributionFlips": { "flipped": 292, "considered": 309 },
+      "reproduce": "npm run audit:github"
+    },
+    {
+      "corpus": "GitHub",
+      "system": "derivation-aware",
+      "pairs": 1118,
+      "leakedUnits": 0,
+      "attributionFlips": { "flipped": 0, "considered": 309 },
+      "assertions": { "unauthenticated404": "26/26" },
+      "reproduce": "npm run audit:github"
+    }
+  ]
+}

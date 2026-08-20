@@ -76,8 +76,21 @@ Three things beyond the headline:
    GitHub repositories, five private and three public, fetched live. Only the
    loader differs; extraction, resolution, derivation and the admissibility
    rule are the same code. For every source under a withheld fact the audit
-   issues an unauthenticated request and asserts the refusal: 20/20 return 404.
-   The test oracle is GitHub's server, not our model of it.
+   issues an unauthenticated request and asserts the refusal: 26/26 return 404.
+   The organisation has 11 nested teams as principals, and a GitHub team is a
+   principal in GitHub's own permission model, so the hierarchy is real access
+   structure rather than an org chart we drew. The test oracle is GitHub's
+   server, not our model of it.
+
+4. We found an aggregation leak in our own system and shipped the fix with its
+   cost. Two facts a principal is entitled to can determine a third they are
+   not; document-level filtering cannot express this at all. We proved that an
+   attacker cannot climb the derivation edges, proved that Cordon is closed
+   under aggregation exactly when the corpus has "claim locality", then measured
+   the premise instead of assuming it. On a fixture with realistic
+   cross-repository references, Cordon leaked 16 of 130 denied pairs. Widening
+   the requirement to include spaces a fact *names* takes that to 0, at a cost
+   of 54 additional withholdings. Both rules ship with their numbers.
 
 3. We measured the channels we did not close. Compositional inference — whether
    permitted answers jointly reconstruct a denied one — and the refusal side
@@ -106,18 +119,16 @@ is the whole product.
 The requirement is *discovered* by walking RESTS_ON, per asker, at query time —
 never read from a field. It cannot be materialised: with n principals there are
 2^n visibility subsets, and precomputing per principal is 30M rows that a single
-membership change invalidates. docs/LATENCY.md turns that argument into numbers
-rather than leaving it an assertion.
+membership change invalidates.
 
 A vector index cannot express this even in principle. An embedding records what
 a fact resembles, not what it was derived from, and a constraint that propagates
 along derivation has nothing to travel down. Similarity is not provenance.
 
-The graph is 95,898 nodes and 226,357 edges. What runs where is published in
-docs/WHERE-IT-RUNS.md, including the part that is application-side: the
-transitive org closure, because a variable-length pattern composed with one
-further fixed hop times out at 30s while the variable-length half alone takes
-287ms.
+The graph is 95,898 nodes and 226,357 edges. We also publish what does *not*
+run in the engine: the transitive org closure is application-side, because
+variable-length MATCH requires a fixed source id, so a closure over a whole
+relation has to be driven from the client one bound start node at a time.
 
 Three engine behaviours shaped the design, all documented in
 docs/HYDRADB-ENGINE-NOTES.md:
@@ -138,8 +149,8 @@ We filed three findings upstream with reproductions:
   hydra-db/hydradb#116  no batch write path for labelled nodes
   hydra-db/hydradb#117  five OpenCypher subset constraints, one silent failure
 
-That last one is a correctness bug in an authorisation path, and finding it is
-the most useful thing this project can hand back to the HydraDB team.
+The first is a correctness bug in an authorisation path, and finding it is the
+most useful thing this project can hand back to the HydraDB team.
 ```
 
 ## Repository
@@ -173,4 +184,6 @@ Console (13 real GitHub team principals, three gates, derivation chains):
 - [ ] README first line is the one sentence, unchanged
 - [ ] Commit-history note present in README
 - [ ] No rounded counts anywhere — say "all 26", never "100%"
+- [ ] LICENSE detected by GitHub as Apache-2.0, not NOASSERTION
+- [ ] Every README link clicked, including the eight doc links
 - [ ] Submit early; do not discover a broken link at 11:58 PM

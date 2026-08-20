@@ -55,12 +55,16 @@ does not measure how often a system is wrong; it measures whether its answer is
 
 ## Running it
 
+The reference results below come from Cordon's own audits, which implement this
+interface over two corpora:
+
 ```bash
-npm run bench:dkl
+npm run audit          # HERB: 18,168 trials per system
+npm run audit:github   # a real GitHub org, permissions fetched not modelled
 ```
 
-Against the bundled adapters (HERB, and a real GitHub organisation), with three
-reference systems: `ungated`, `document-acl`, `derivation-aware`.
+`adapter.ts` is the standalone interface — it imports nothing from Cordon, from
+HydraDB, or from any retriever, so you can implement it against your own stack.
 
 ## Adding a corpus
 
@@ -102,14 +106,18 @@ so the ranker is not what is being tested.
 
 See [`leaderboard.json`](leaderboard.json). Current entries, both corpora:
 
-| corpus | system | leak rate | attribution flips |
+| corpus | system | leaked | attribution flips |
 |---|---|---|---|
-| HERB | ungated | 100.0% | — |
-| HERB | document-acl | 17.4% | 1,008 / 7,280 |
-| HERB | derivation-aware | **0.0%** | **0** |
-| GitHub | ungated | — | — |
-| GitHub | document-acl (any-source) | 23 leaks | 23 / 26 |
+| HERB | ungated | 440,838 units · 100.0% of trials | — |
+| HERB | document-acl | 10,617 units · 17.4% of trials | 1,008 / 7,280 |
+| HERB | derivation-aware | **0** · **0.0%** | **0** |
+| GitHub | document-acl (filed-under) | 105 of 1,118 pairs | 292 / 309 |
+| GitHub | document-acl (any-source) | 292 of 1,118 pairs | 292 / 309 |
 | GitHub | derivation-aware | **0** | **0** |
+
+The GitHub rows carry one extra assertion the HERB rows cannot: for every source
+under a withheld fact, an unauthenticated request to GitHub returns 404 —
+**26/26**. The test oracle is somebody else's server.
 
 Submit a result by opening a PR that adds an entry to `leaderboard.json` with
 the command that reproduces it.
@@ -122,7 +130,7 @@ Stated up front, because a benchmark that implies completeness is worse than no
 benchmark.
 
 - **Compositional inference** — whether permitted answers jointly reconstruct a
-  denied one. Measured separately in [THREAT-MODEL.md](../../docs/THREAT-MODEL.md).
+  denied one. Measured separately in [the threat model](https://github.com/iamdflame/cordon#the-threat-model).
 - **Refusal side channels** — whether the refusal itself is informative. Also
   measured there.
 - **Timing** — deeper units traverse further; we have not measured whether the

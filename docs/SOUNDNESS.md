@@ -133,8 +133,8 @@ be falsified because nobody wrote down what it excludes.
 
 | not covered | status | measured in |
 |---|---|---|
-| **Compositional inference** — permitted answers jointly determining a denied fact | open | [THREAT-MODEL.md](THREAT-MODEL.md#channel-2---compositional-inference) |
-| **Refusal as an oracle** — the refusal itself carrying information | mitigable | [THREAT-MODEL.md](THREAT-MODEL.md#channel-3---refusal-as-an-oracle) |
+| **Compositional inference** — permitted answers jointly determining a denied fact | open | [the threat model](https://github.com/iamdflame/cordon#the-threat-model) |
+| **Refusal as an oracle** — the refusal itself carrying information | mitigable | [the threat model](https://github.com/iamdflame/cordon#the-threat-model) |
 | **Timing** — deeper facts traverse further, so latency correlates with depth | unmeasured | — |
 | **Cross-principal collusion** — two principals pooling permitted answers | unmeasured | — |
 | **Correctness of `perm`** | out of scope | it is fetched, not modelled — see [RESULTS-GITHUB.md](RESULTS-GITHUB.md) |

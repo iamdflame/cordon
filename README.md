@@ -179,7 +179,8 @@ time to find.
 | what we hit | consequence | what we did |
 |---|---|---|
 | **Results silently truncate at 1,024 rows**, returning a `next_cursor` that is already expired | A query for the membership relation returned 1,024 of 1,371 edges with **no error**. A quarter of an access-control table, missing, looking exactly like success | `queryComplete` throws on truncation-with-cursor; membership is read partitioned per space. Filed upstream |
-| **Variable-length traversal composed with one further hop is pathological** — `MANAGES*1..6` alone is 287ms, the same pattern plus one hop times out at 30s | The natural phrasing of a two-relation authorization question is unusable | Decomposed client-side; the requirement traversal reads `s.space` as a property instead of hopping to the `Space` node. Filed upstream |
+| **Variable-length `MATCH` requires a fixed source id** — `variable-length MATCH requires a fixed source id` | A transitive closure over a whole relation cannot be asked for; it has to be driven from the client, one bound start node at a time | The org closure is application-side. Filed upstream ([#117](https://github.com/hydra-db/hydradb/issues/117)) |
+| **Composing a variable-length walk with a further fixed hop is pathological** — measured at 287ms alone against a 30s timeout composed, on the full graph | The natural phrasing of a two-relation authorization question is unusable | The requirement traversal reads `s.space` as a property rather than hopping to the `Space` node |
 | **No batch write path.** `UNWIND $batch` exists but rejects labels in batch node patterns; multi-statement requests are rejected | 226,357 edges is 226,357 round trips | Paced ingest. Filed upstream |
 | **`MATCH (n)` with no label or predicate is rejected** | Health probes fail confusingly | Probe names a label |
 | **Alternation inside a variable-length pattern is rejected** (`-[:A\|B*1..n]->`) | The support relation cannot be typed | One `RESTS_ON` edge type, kind carried as a property |
@@ -289,7 +290,7 @@ the one our own defence opens.
 | channel | status | size |
 |---|---|---|
 | **Explicit derivation** | **closed** | 0 leaks in 330,190 (fact, principal) pairs, [proved](docs/SOUNDNESS.md) and checked exhaustively |
-| **Compositional inference** | **open, measured** | see THREAT-MODEL.md |
+| **Compositional inference** | **open, measured** | `npm run audit:channels` |
 | **Refusal side channel** | **mitigable, measured** | in bits, with a mode that closes it and the cost stated |
 
 ```bash
@@ -740,7 +741,7 @@ reading documentation. Findings that changed the architecture:
   go through `queryComplete()`, which throws on truncation, and membership is
   fetched per space.
 - **A variable-length traversal composed with a further hop is pathological.**
-  `MANAGES*1..6` alone: 287ms. The same plus one fixed hop: 30s timeout, at every
+  `MANAGES*1..6` alone: 287ms, measured on the full graph. The same plus one fixed hop: 30s timeout, at every
   depth. The cost is the composition, not the depth.
 - **Cells are isolated shards.** Four cells give 1.6× write throughput, but a
   write to `cell-0` is invisible from `cell-1` — sharding would sever every

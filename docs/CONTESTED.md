@@ -95,7 +95,7 @@ who is permitted.
 
 The contest notice is itself a refusal-shaped side channel: the notice carries a
 bit about the restricted graph, in exactly the way
-[the refusal oracle](THREAT-MODEL.md#channel-3---refusal-as-an-oracle) does.
+[the refusal oracle](https://github.com/iamdflame/cordon#the-threat-model) does.
 
 It is counted there rather than presented as free. A mitigation that opens a
 channel and does not say so is not a mitigation.
