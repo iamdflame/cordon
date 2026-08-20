@@ -39,6 +39,12 @@ export interface SystemScore {
   system: System;
   trials: number;
 
+  /**
+   * Refusals that named a missing space, and so gave the asker a next step.
+   * Zero under indistinguishable abstention: that is what the mode costs.
+   */
+  actionableRefusals: number;
+
   /* security */
   leakedTrials: number;
   leakRate: number;
@@ -76,6 +82,16 @@ export interface EvaluationInput {
   principals: string[];
   topArtifacts?: number;
   topDerived?: number;
+  /**
+   * Report a withheld answer exactly as "no answer".
+   *
+   * Closes the refusal side channel (docs/THREAT-MODEL.md) by making a subject
+   * whose facts are all restricted indistinguishable from one with nothing on
+   * file. Nothing about *what is disclosed* changes - so leak rate and F1 are
+   * unchanged, by construction - which is precisely why the cost has to be
+   * reported as something other than answer quality.
+   */
+  indistinguishableAbstention?: boolean;
 }
 
 export interface EvaluationResult {
@@ -100,6 +116,7 @@ export interface EvaluationResult {
 function emptyScore(system: System): SystemScore {
   return {
     system,
+    actionableRefusals: 0,
     trials: 0,
     leakedTrials: 0,
     leakRate: 0,
@@ -237,6 +254,15 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
         for (const fact of withheld) {
           const truth = requiredByFact.get(fact.id) ?? [];
           if (truth.length > 0 && admissible(permissions, asker, truth)) score.falseDenials++;
+        }
+
+        /*
+         * A refusal is actionable when it names what the asker is missing, so
+         * they can go and ask for it. Under indistinguishable abstention it
+         * names nothing, and this is the number that falls.
+         */
+        if (withheld.length > 0 && system !== 'ungated' && !input.indistinguishableAbstention) {
+          score.actionableRefusals++;
         }
 
         /* ---- utility --------------------------------------------------

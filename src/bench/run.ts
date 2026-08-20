@@ -231,6 +231,7 @@ async function main() {
     JSON.parse(readFileSync('data/herb/customers_data.json', 'utf8')),
   );
 
+  const quietRefusal = args.includes('--indistinguishable-abstention');
   const result = evaluate({
     corpus,
     facts,
@@ -243,7 +244,47 @@ async function main() {
     principals,
     topArtifacts: 20,
     topDerived: 6,
+    indistinguishableAbstention: quietRefusal,
   });
+
+  if (quietRefusal) {
+    /*
+     * Run it both ways so the trade is a comparison rather than an assertion.
+     * Disclosure is identical by construction; the whole cost lands on whether
+     * a refusal tells the asker anything they can act on.
+     */
+    const loud = evaluate({
+      corpus,
+      facts,
+      permissions,
+      artifactIndex,
+      derivedIndex,
+      requiredByFact,
+      answerContext,
+      questions,
+      principals,
+      topArtifacts: 20,
+      topDerived: 6,
+    });
+    const cordonQuiet = result.scores.find((s) => s.system === 'cordon')!;
+    const cordonLoud = loud.scores.find((s) => s.system === 'cordon')!;
+    console.log(`\n${c.bold}Indistinguishable abstention${c.reset} ${c.dim}what closing the refusal channel costs${c.reset}\n`);
+    console.log(`  ${'mode'.padEnd(22)} ${'leak rate'.padStart(10)} ${'answer F1'.padStart(10)} ${'actionable refusals'.padStart(20)}`);
+    console.log('-'.repeat(66));
+    console.log(
+      `  ${'distinguishable'.padEnd(22)} ${(cordonLoud.leakRate * 100).toFixed(1).padStart(9)}% ` +
+        `${cordonLoud.f1.toFixed(3).padStart(10)} ${cordonLoud.actionableRefusals.toLocaleString().padStart(20)}`,
+    );
+    console.log(
+      `  ${'indistinguishable'.padEnd(22)} ${(cordonQuiet.leakRate * 100).toFixed(1).padStart(9)}% ` +
+        `${cordonQuiet.f1.toFixed(3).padStart(10)} ${c.red}${cordonQuiet.actionableRefusals.toLocaleString().padStart(20)}${c.reset}`,
+    );
+    console.log(
+      `\n  ${c.dim}Disclosure and answer quality are identical, by construction: the\n` +
+        `  admitted set does not change. The entire cost is that ${cordonLoud.actionableRefusals.toLocaleString()} refusals\n` +
+        `  stop telling the asker which space to go and ask for.${c.reset}`,
+    );
+  }
 
   const lexical = evaluateLexicalBaseline(corpus, questions, artifactIndex, answerContext, 20);
 
