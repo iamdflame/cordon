@@ -105,6 +105,20 @@
   }
   .provenance b { color: var(--ink); font-weight: 600; }
 
+  /* Where this page's data came from. Stated, not implied. */
+  .src-badge {
+    margin: 10px 0 0; display: inline-flex; align-items: center; gap: 7px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px;
+    padding: 5px 11px; border-radius: 5px; border: 1px solid var(--rule-strong);
+    color: var(--ink-2);
+  }
+  .src-badge::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ink-3); flex: none;
+  }
+  .src-badge.live { border-color: var(--admit); color: var(--admit); }
+  .src-badge.live::before { background: var(--admit); }
+
   /* ----------------------------------------------------------------- layout */
   .cols { display: grid; grid-template-columns: 288px minmax(0, 1fr); gap: 26px; align-items: start; }
   @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
@@ -279,6 +293,7 @@
       about what that person may be told.
     </p>
     <div class="provenance" id="provenance"></div>
+    <p id="source-badge" class="src-badge" hidden></p>
   </header>
 
   <div class="cols">
@@ -311,7 +326,17 @@
 
 <script id="capture" type="application/json">__CAPTURE__</script>
 <script>
-  const DATA = JSON.parse(document.getElementById('capture').textContent);
+  /*
+   * Prefer the live backend; fall back to the committed transcript.
+   *
+   * The hosted API runs the same code against the same real GitHub
+   * permissions, so both paths show the same thing — but a visitor should
+   * never meet an empty page because a container is asleep, and they should
+   * always be told which one they are looking at.
+   */
+  const API = 'https://api-production-7ca2d.up.railway.app';
+  const TRANSCRIPT = JSON.parse(document.getElementById('capture').textContent);
+  let DATA = TRANSCRIPT;
   const privateSpaces = new Set(DATA.spaces.filter(s => s.private).map(s => s.id));
   const spaceUrl = Object.fromEntries(DATA.spaces.map(s => [s.id, s.url]));
   const shortName = id => id.replace(/^cordon-demo-/, '');
@@ -337,7 +362,8 @@
       `(${priv} private, ${DATA.spaces.length - priv} public) in the <b>${DATA.owner}</b> organisation, ` +
       `with <b>${DATA.teams.length} nested teams</b> as principals.<br>` +
       `Requirements were resolved by graph traversal, never read from a field. ` +
-      `Commit <b>${DATA.gitSha.slice(0, 12)}</b> &middot; ${DATA.generatedAt.slice(0, 19).replace('T', ' ')}Z`;
+      (DATA.gitSha ? `Commit <b>${DATA.gitSha.slice(0, 12)}</b> &middot; ` : '') +
+      `${(DATA.generatedAt || '').slice(0, 19).replace('T', ' ')}Z`;
   }
 
   function renderPrincipals() {
@@ -480,5 +506,40 @@
   }
 
   function render() { renderPrincipals(); renderSummary(); renderFacts(); }
-  renderProvenance(); renderFooter(); render();
+
+  function setBadge(live) {
+    const el = document.getElementById('source-badge');
+    el.hidden = false;
+    el.className = 'src-badge' + (live ? ' live' : '');
+    el.textContent = live
+      ? 'Live — computed against HydraDB just now'
+      : 'Verified transcript — captured from a real run, committed with its git SHA';
+  }
+
+  async function boot() {
+    renderProvenance();
+    renderFooter();
+    render();
+    setBadge(false);
+
+    // Give a cold container a moment, but never leave the page waiting on it.
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);
+      const res = await fetch(API + '/api/capture', { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) return;
+      const fresh = await res.json();
+      if (!fresh || !Array.isArray(fresh.facts) || fresh.facts.length === 0) return;
+      DATA = fresh;
+      current = DATA.principals.find(p => p.id === current.id) || DATA.principals[0];
+      renderProvenance();
+      render();
+      setBadge(true);
+    } catch {
+      // Transcript is already on screen; nothing to do.
+    }
+  }
+
+  boot();
 </script>

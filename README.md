@@ -16,6 +16,7 @@ has no answer for it.
 > npm run audit:github     # real GitHub permissions; 26/26 404 assertions
 > npm run attack           # the aggregation attack, and the 16 → 0 fix
 > ```
+> Or click the console above — it is a live HydraDB instance, not a mock.
 
 [Results](docs/RESULTS.md) · [**The aggregation attack**](docs/ATTACK.md) ·
 [Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Disclosure-dependent truth](docs/CONTESTED.md) ·
@@ -55,12 +56,17 @@ own citations — and the leak column does not move. The finding survives your
 retriever, including one much better than ours.
 
 The console at [cordon-graph.vercel.app/console](https://cordon-graph.vercel.app/console)
-is a **verified transcript**: every response on it was captured byte-for-byte
-from a real HydraDB run against the real GitHub permissions below, and committed
-under [`artifacts/console-capture.json`](artifacts/console-capture.json) with the
-git SHA and timestamp that produced it. Nothing is simulated or hand-written —
-every requirement was resolved by traversing `RESTS_ON` in the graph.
-`docker compose up` reproduces it live.
+runs against a **live backend**: a HydraDB node and the Cordon API, both hosted,
+serving the real GitHub permissions below. Requirements are resolved by
+traversing `RESTS_ON` in the graph at the moment you load the page — the badge
+at the top says so.
+
+If the container is cold it falls back to a **verified transcript** captured
+byte-for-byte from a real run and committed under
+[`artifacts/console-capture.json`](artifacts/console-capture.json) with its git
+SHA. The page always tells you which one you are looking at. A visitor should
+never meet an empty page because a container was asleep, and should never be
+left guessing whether what they are reading is real.
 
 Everything above regenerates: `npm run audit`, `npm run audit:github`,
 `npm run attack`. Raw artifacts carrying the git SHA and timestamp are committed

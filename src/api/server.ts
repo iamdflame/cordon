@@ -10,7 +10,22 @@ import cors from '@fastify/cors';
 import { HydraClient, defaultConfig } from '../hydra/client.js';
 import { buildGraph, type BuiltGraph } from '../cordon/pipeline.js';
 import { FactIndex, PermissionOracle, retrieve } from '../cordon/query.js';
+import { admissible } from '../cordon/acl.js';
+import { corpusFromSnapshot, loadSnapshot } from '../cordon/corpus/github.js';
+import { buildVocabulary } from '../attack/mine.js';
+import { spacesNamedIn } from '../attack/model.js';
 import type { FactNode } from '../cordon/model.js';
+
+/**
+ * Which corpus this instance serves.
+ *
+ * `github` is what the hosted deployment runs: 8 real repositories and 11
+ * nested teams, 405 edges, which ingests in about a minute. The full HERB graph
+ * is 226,357 edges and over an hour of write-bound ingest, so it is built
+ * locally and re-attached rather than stood up on a cold container.
+ */
+const CORPUS = process.env.CORDON_CORPUS === 'github' ? 'github' : 'herb';
+const SNAPSHOT = process.env.CORDON_SNAPSHOT ?? 'fixtures/github/snapshot.json';
 
 let built: BuiltGraph | null = null;
 let index: FactIndex | null = null;
@@ -22,11 +37,20 @@ const client = new HydraClient();
 
 async function boot() {
   try {
+    /*
+     * On the GitHub corpus the graph is ingested here rather than re-attached:
+     * a cold container has an empty store, and 405 edges is a minute. On HERB
+     * the graph is far too large to build at boot, so we attach to one that is
+     * already there.
+     */
+    const isGitHub = CORPUS === 'github';
     built = await buildGraph({
       dataRoot: 'data/herb',
+      ...(isGitHub ? { corpus: corpusFromSnapshot(loadSnapshot(SNAPSHOT)) } : {}),
       client,
-      graphId: process.env.CORDON_GRAPH ?? 'cordon-v1',
-      skipIngest: true,
+      graphId: process.env.CORDON_GRAPH ?? (isGitHub ? 'cordon-github2' : 'cordon-v1'),
+      skipIngest: !isGitHub,
+      concurrency: 6,
       onProgress: (phase, _d, _t, detail) => {
         if (detail) console.log(`  ${phase.padEnd(10)} ${detail}`);
       },
@@ -308,7 +332,113 @@ app.get<{ Params: { id: string } }>('/api/fact/*', async (request, reply) => {
   return { fact: { id: fact.id, text: fact.text, level: fact.level }, required, supports };
 });
 
+/**
+ * The console's payload: every derived fact, every principal, and what each of
+ * the three gates would do — computed live rather than replayed.
+ *
+ * Identical in shape to `artifacts/console-capture.json`, so the static page
+ * can prefer this and fall back to the committed transcript when the backend is
+ * cold. A visitor should never see an empty page because a container is asleep.
+ */
+app.get('/api/capture', async (_req, reply) => {
+  if (!built || !oracle) return reply.code(503).send({ error: buildError ?? 'building' });
+  const { facts, permissions, corpus } = built;
+  const vocabulary = buildVocabulary(corpus);
+
+  const required = new Map<string, string[]>();
+  for (const fact of facts) {
+    required.set(
+      fact.id,
+      fact.level === 0 ? fact.requiredSpaces : await oracle.requiredSpaces(fact.id),
+    );
+  }
+
+  const artifactByKey = new Map(corpus.artifacts.map((a) => [a.key, a]));
+  const factById = new Map(facts.map((f) => [f.id, f]));
+
+  const chain = (factId: string, depth = 0, seen = new Set<string>()): unknown[] => {
+    if (depth > 4 || seen.has(factId)) return [];
+    seen.add(factId);
+    const fact = factById.get(factId);
+    if (!fact) return [];
+    return fact.restsOn.slice(0, 6).map((support) => {
+      if (support.startsWith('s:')) {
+        const a = artifactByKey.get(support.slice(2));
+        return {
+          kind: 'source',
+          space: a?.space ?? '',
+          title: a?.title ?? '',
+          locator: a?.locator ?? '',
+          text: (a?.text ?? '').replace(/\s+/g, ' ').slice(0, 220),
+        };
+      }
+      const parent = factById.get(support);
+      return {
+        kind: 'fact',
+        level: parent?.level ?? 0,
+        space: parent?.space ?? '',
+        text: parent?.text ?? '',
+        requires: required.get(support) ?? [],
+        restsOn: chain(support, depth + 1, seen),
+      };
+    });
+  };
+
+  const principals = [...permissions.readable.keys()]
+    .filter((p) => (permissions.readable.get(p)?.size ?? 0) > 0)
+    .sort();
+
+  return {
+    generatedAt: new Date().toISOString(),
+    live: true,
+    owner: process.env.CORDON_GH_OWNER ?? 'cordon-demo',
+    note: 'Computed live against HydraDB. Requirements resolved by graph traversal.',
+    spaces: [...corpus.spaces.values()].map((sp) => ({
+      id: sp.id,
+      // A repo is private exactly when the anonymous principal cannot read it.
+      private: !sp.team.includes('public'),
+      url: `https://github.com/${process.env.CORDON_GH_OWNER ?? 'cordon-demo'}/${sp.id}`,
+    })),
+    teams: [],
+    principals: principals.map((id) => ({
+      id,
+      name: corpus.employees.get(id)?.name ?? id,
+      role: corpus.employees.get(id)?.role ?? '',
+      spaces: [...(permissions.readable.get(id) ?? [])].sort(),
+    })),
+    facts: facts
+      .filter((f) => f.level >= 1)
+      .map((fact) => {
+        const req = required.get(fact.id) ?? [];
+        const named = spacesNamedIn(fact, vocabulary);
+        return {
+          id: fact.id,
+          text: fact.text,
+          level: fact.level,
+          filedUnder: fact.space,
+          requires: req,
+          namesButDoesNotRestOn: named.filter((sp) => !req.includes(sp)),
+          restsOn: chain(fact.id),
+          verdicts: Object.fromEntries(
+            principals.map((p) => {
+              const permitted = permissions.readable.get(p) ?? new Set<string>();
+              return [
+                p,
+                {
+                  cordon: admissible(permissions, p, req),
+                  documentAcl: permitted.has(fact.space),
+                  anySource: req.some((sp) => permitted.has(sp)),
+                  missing: req.filter((sp) => !permitted.has(sp)),
+                },
+              ];
+            }),
+          ),
+        };
+      }),
+  };
+});
+
 const port = Number(process.env.PORT ?? 8787);
-await app.listen({ port, host: '127.0.0.1' });
-console.log(`cordon api on http://127.0.0.1:${port}`);
+await app.listen({ port, host: process.env.HOST ?? '127.0.0.1' });
+console.log(`cordon api listening on ${process.env.HOST ?? '127.0.0.1'}:${port} (corpus: ${CORPUS})`);
 void boot();
