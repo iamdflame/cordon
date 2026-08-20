@@ -4,7 +4,13 @@
 
 **Hack Hydra 2026 — Track 01: Enterprise Context + Ontology**
 
-[Results on HERB](docs/RESULTS.md) · [Results on real GitHub permissions](docs/RESULTS-GITHUB.md) · [Engine notes](docs/HYDRADB-ENGINE-NOTES.md) · [Demo guide](docs/DEMO.md)
+**Demo video:** _<add URL before submitting>_
+
+[Results on HERB](docs/RESULTS.md) · [Real GitHub permissions](docs/RESULTS-GITHUB.md) ·
+**[The threat model](docs/THREAT-MODEL.md)** · [Disclosure-dependent truth](docs/CONTESTED.md) ·
+[Soundness](docs/SOUNDNESS.md) · [Latency](docs/LATENCY.md) ·
+[What runs where](docs/WHERE-IT-RUNS.md) · [Engine notes](docs/HYDRADB-ENGINE-NOTES.md) ·
+[DKL benchmark](bench/dkl/) · [Demo guide](docs/DEMO.md)
 
 ---
 
@@ -99,42 +105,242 @@ control we then enforced. So the whole thing runs a second time against a system
 that already has permissions.
 
 ```bash
-npm run audit:github          # replays a snapshot — no credentials needed
+npm run audit:github              # replays a snapshot — no credentials needed
 npm run audit:github -- --fetch   # re-fetch live, needs `gh auth login`
 ```
 
 | Cordon | GitHub |
 |---|---|
-| Principal | an account, or `public` — the unauthenticated internet |
+| Principal | an account, **a team**, or `public` — the unauthenticated internet |
 | Space | a repository |
-| MEMBER_OF | collaboration, or public visibility |
+| MEMBER_OF | collaboration, team grant, or public visibility |
+| MANAGES | team nesting — child teams inherit the parent's repositories |
 | Source | an issue or comment |
 
-Three real repositories — two private, one public. Only the loader differs;
-extraction, entity resolution, derivation, ingest and the admissibility rule are
-the same code, unchanged.
+A real organisation: **8 repositories** (5 private, 3 public) and **11 teams
+nested two deep**, every grant fetched from the API. A GitHub team *is* a
+principal in GitHub's own permission model, so the hierarchy is a real access
+structure read out of somebody else's system rather than an org chart we drew.
 
-A person named in the public handbook *and* in both private repositories
-produces a derived fact that rests on all three. A document-level gate
-discloses it to the anonymous internet — because the asker holds one of the
-three, which is all such a gate asks. Cordon withholds it.
+Only the loader differs from the HERB run. Extraction, entity resolution,
+derivation, ingest and the admissibility rule are the same code.
 
-All three of the pairs that must be withheld in this snapshot **flip** depending
-on which of the fact's own sources the node is attributed to, which is the
-finding above reproduced on permissions we did not write.
+**13 principals · 86 facts (26 derived) · 1,118 (fact, principal) pairs**
 
-The audit then requests the underlying source without credentials:
+| gate | leaked |
+|---|---|
+| document-acl, filed-under | 105 |
+| document-acl, any-source | 292 |
+| **Cordon** | **0** |
+
+And the attribution finding reproduces, harder: **292 of the 309 pairs that must
+be withheld — 94% — flip depending on which of the fact's own sources the node
+was filed under.** On real permissions, from a real org, a document-level gate's
+answer is arbitrary almost every time it matters.
+
+### The 404 is the test oracle
+
+For every source underneath a withheld fact, the audit issues an
+unauthenticated request and asserts the refusal:
 
 ```
-$ curl -s -o /dev/null -w '%{http_code}'     https://api.github.com/repos/iamdflame/cordon-demo-borealis/issues/4
+distinct restricted sources under withheld facts   26
+anonymous GET returned 404                         26
+```
+
+**26/26.** Not our model of access control — GitHub's server, answering a
+request anyone can make:
+
+```
+$ curl -s -o /dev/null -w '%{http_code}' \
+    https://github.com/cordon-demo/cordon-demo-fornax/issues/2
 404
 ```
 
-**GitHub refuses to show the document. The fact derived from it was handed over
-anyway.** The ground truth here is not our model of access control — it is an
-HTTP status code from someone else's server.
+GitHub refuses to show the document. A document-level gate hands over the fact
+derived from it.
+
+> The check deliberately uses `github.com` rather than `api.github.com`. The
+> unauthenticated API allows 60 requests an hour and then answers **403** to
+> everything, and counting a rate-limit 403 as a pass would fabricate the exact
+> result this section exists to establish. Rate limiting is detected and
+> reported separately from pass and fail.
 
 [Full GitHub results →](docs/RESULTS-GITHUB.md)
+
+---
+
+## The threat model
+
+Cordon closes one channel. A security claim that names only the channel it
+closed is a result, not a threat model — so all three are measured, including
+the one our own defence opens.
+
+| channel | status | size |
+|---|---|---|
+| **Explicit derivation** | **closed** | 0 leaks in 330,190 (fact, principal) pairs, [proved](docs/SOUNDNESS.md) and checked exhaustively |
+| **Compositional inference** | **open, measured** | see [THREAT-MODEL.md](docs/THREAT-MODEL.md) |
+| **Refusal side channel** | **mitigable, measured** | in bits, with a mode that closes it and the cost stated |
+
+```bash
+npm run audit:channels
+```
+
+### Compositional inference — open
+
+A principal denied fact *F* still holds everything Cordon *did* give them. Our
+rule is sound over explicit derivation and says nothing about inference: if the
+permitted answers jointly determine *F*, withholding *F* accomplishes nothing.
+
+We measure **recovery** — the share of a denied fact's claims already reachable
+from facts the principal may see — and break it down by depth. Recovery falls as
+depth rises, for a structural reason rather than a lucky one: a deeper fact
+rests on more spaces, so a principal denied it holds a smaller share of what it
+is built from. **Cordon degrades most gracefully exactly where the explicit
+channel is most dangerous.**
+
+We are not closing this channel. Sizing it is the honest position; claiming that
+derived-knowledge access control defeats inference would not be.
+
+### Refusal as an oracle — mitigable, and *we* created it
+
+Cordon refuses **informatively**: it names the spaces you are missing. That is
+the right product behaviour — it turns a refusal into a next step — and it is a
+perfect oracle. An attacker who sweeps subjects and records only *which
+questions were refused*, never reading a fact, maps the restricted graph.
+
+Measured as mutual information in bits between the hidden variable (*does a
+restricted fact about this subject exist?*) and what the system does.
+
+The mitigation ships:
+
+```bash
+npm run audit -- --indistinguishable-abstention
+```
+
+A withheld answer is reported exactly as *no answer*. Channel leakage collapses.
+**The cost is not answer quality** — F1 is unchanged, because the admitted set
+is unchanged. The cost is that refusals stop being actionable: a legitimate user
+can no longer tell *"ask someone with clearance for Beta"* from *"this is not in
+the corpus."*
+
+That is a governance decision, not an engineering one, so **both modes ship and
+the operator chooses**. Picking one silently is what a demo does.
+
+[Full measurements →](docs/THREAT-MODEL.md)
+
+---
+
+## Disclosure-dependent truth
+
+Track 01 names three hard problems and contradiction is the third. The usual
+answer is a trust score. We think there is a prior question, and it is one only
+a system modelling **both** contest and access can ask:
+
+> **Whether you perceive a contradiction at all depends on what you are allowed
+> to see.**
+
+If two sources conflict and sit in different spaces, a principal with access to
+only one sees a single **uncontested** claim. They are not told there is another
+side. They are not told the other side exists.
+
+```
+"the ledger migration is on track"   [cordon-demo-atlas]
+"the ledger migration is blocked"    [cordon-demo-draco]
+
+looks settled to 4 principals; 3 colleague pairs would receive opposite values
+```
+
+Detection is deterministic over a closed predicate set, matched against
+already-resolved entities. **Nothing adjudicates** — an adjudicator would
+collapse the two sides into one answer and destroy exactly the structure being
+measured.
+
+Cordon's answer is to **disclose the contest, not the content**: *"a source you
+do not have access to disagrees"* names neither the claim nor its space. A user
+told their answer is contested can escalate; a user told nothing cannot.
+
+Two honesty notes, because they matter more than the number:
+
+- **HERB contains no detectable semantic contradiction.** Name and role never
+  co-occur once in 4.7M characters of document text. It is generated per product
+  and is internally consistent. The 28 shared-source disagreements it *does*
+  contain are **paraphrases**, not opposed claims, and are reported separately as
+  description divergence rather than dressed up as contradiction.
+- The opposed claims above are **seeded** into the GitHub fixture and labelled as
+  seeded. The permissions they run against are real; the measurement is what is
+  being demonstrated.
+- The contest notice is itself a refusal-shaped side channel, and it is counted
+  in the threat model rather than presented as free.
+
+[Full analysis →](docs/CONTESTED.md)
+
+---
+
+## Using Cordon in your own stack
+
+The gate is retrieval-agnostic — [proved empirically](docs/RESULTS.md), not
+asserted — and stateless per call given the graph. **Keep your stack, add the
+gate.**
+
+```bash
+curl -s localhost:8787/v1/admissible -H 'content-type: application/json' -d '{
+  "principal": "eid_9b023657",
+  "facts": [{"id": "fact:derived:person:eid_4c81"}]
+}'
+```
+
+```json
+{
+  "admitted": [],
+  "withheld": [{
+    "id": "fact:derived:person:eid_4c81",
+    "requires": ["EdgeForce", "PersonalizeForce", "FeedbackForce"],
+    "missing": ["PersonalizeForce"],
+    "chain": ["fact:claim:...", "s:EdgeForce::doc_113"]
+  }]
+}
+```
+
+### MCP server
+
+```json
+{ "mcpServers": { "cordon": { "command": "npx", "args": ["tsx", "src/mcp/server.ts"] } } }
+```
+
+Two tools — `ask_as(principal, question)` and `check_admissible(principal,
+factIds)` — so any agent framework enforces derived-knowledge access control
+with a config line.
+
+Both surfaces **fail closed** on a fact they cannot evaluate. A gate that admits
+what it cannot reason about is not a gate.
+
+---
+
+## Soundness
+
+> For every fact `f` and principal `p`, if Cordon discloses `f` to `p`, then
+> every source in the transitive support closure of `f` sits in a space `p` may
+> read.
+
+Proved by induction on derivation depth; the step that carries it is
+union-monotonicity, `req(g) ⊆ req(f)` for every support `g` of `f`. That is
+precisely why the requirement must be *computed* from supports rather than
+declared on the node — a declared requirement can under-state, and an
+under-stated requirement fails open silently.
+
+Verified three ways: exhaustively over all 330,190 pairs; against a requirement
+recomputed **independently** from the corpus rather than from the field the
+pipeline wrote; and by a property-based test over random derivation DAGs, with a
+second test that breaks a requirement on purpose and asserts the first one
+catches it.
+
+**The scope is stated in the same breath as the theorem.** It covers explicit
+derivation only, and says nothing about the compositional or refusal channels —
+which is why those are measured above. A soundness theorem published without its
+limits invites the reader to assume it covers everything.
+
+[The proof and its scope →](docs/SOUNDNESS.md)
 
 ---
 
@@ -339,9 +545,26 @@ npm run audit -- --sample
 # full corpus
 npm run build:graph -- --dry     # plan only: reports the edge budget
 npm run build:graph              # ~226k edges, write-bound
-npm run audit
+npm run audit                    # leakage, utility, retriever sweep, invariant
 npm run demo:leak
 ```
+
+Everything else, in rough order of how much it will change your mind:
+
+```bash
+npm run audit:github             # real permissions; no credentials needed
+npm run audit:channels           # the two channels we did not close
+npm run audit:contested          # disclosure-dependent truth
+npm run bench:latency            # what query-time traversal costs
+npm run bench:engine             # every formulation we tried against HydraDB
+npm test                         # 15 tests, including property-based soundness
+```
+
+> **Note on restarting HydraDB.** The local object store does not implement
+> conditional writes, so a container stopped and started over an existing store
+> reads fine and fails *every* write with an opaque error. Restarting is not a
+> way to resume an interrupted ingest — use `npm run hydra:up -- --reset` and
+> ingest again.
 
 The interface:
 
@@ -418,13 +641,23 @@ reading documentation. Findings that changed the architecture:
 
 ```
 src/
-  hydra/     HydraDB client, namespaced integer id registry, truncation guard
+  hydra/     client, namespaced id registry, truncation guard
   cordon/    model | corpus | acl | mentions | resolve | facts | ingest | query
-  bench/     evaluation, leak audit, hero scenario
-  api/       HTTP API
+             contradict — deterministic contest detection
+             corpus/github — permissions fetched from a real system
+  bench/     run (audit + retriever sweep) | evaluate | answer | demo
+             channels — compositional and refusal side channels
+             contested — disclosure-dependent truth
+             github — the real-permissions audit and its 404 assertions
+             latency | engine-probe | retrievers
+  api/       HTTP API, including POST /v1/admissible
+  mcp/       MCP server: ask_as, check_admissible
+bench/dkl/   the derived-knowledge leakage benchmark, standalone
 web/         React console: ask as anyone, see what is withheld and why
-docs/        results, engine capability map
-test/        13 tests, no engine required
+scripts/     hydra-up | fetch-herb | seed-github-fixture | seed-github-org
+             repro-row-cap — minimal reproduction of the engine bug
+docs/        results, threat model, soundness, latency, engine notes, demo guide
+test/        15 tests including property-based soundness, no engine required
 ```
 
 ## A note on the commit history
