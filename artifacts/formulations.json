@@ -1,0 +1,34 @@
+{
+  "provenance": {
+    "gitSha": "23faa37692b231fd172560f586ae7010aff92ea4",
+    "gitDirty": true,
+    "generatedAt": "2026-08-20T16:45:09.862Z",
+    "node": "v22.14.0",
+    "seed": 0,
+    "corpus": {
+      "root": "data/herb",
+      "digest": "9268e8dabe619e7197025af0f92af7242e2002ff6db5026c78b31bb601ca2240",
+      "files": 34,
+      "bytes": 28927691
+    }
+  },
+  "factsExamined": 25,
+  "comparable": 0,
+  "agree": 0,
+  "agreementRate": 0,
+  "bothUnresolvable": 25,
+  "pathsUnresolvable": 25,
+  "disagreements": [],
+  "latency": {
+    "pattern": {
+      "p50": 9.88554600000134,
+      "p95": 24.772962999999436,
+      "p99": 69.21212999999989
+    },
+    "paths": {
+      "p50": 10.250944999999774,
+      "p95": 14.062574999999924,
+      "p99": 17.268991999997525
+    }
+  }
+}

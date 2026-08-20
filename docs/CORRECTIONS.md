@@ -144,6 +144,29 @@ Three findings *were* filed, all re-verified first:
 
 ---
 
+## 8. Counting mutual failure as agreement
+
+**The claim, for about four minutes.** "Two independent in-engine formulations
+of the requirement agree on 25 of 25 facts."
+
+**What was wrong.** Both formulations had returned `__unresolvable__`, because
+the `RESTS_ON` edges were still being ingested. Two computations that both
+failed have not agreed about anything. The benchmark counted it as a match and
+printed 100%.
+
+**Why it keeps happening.** This is the third instance of one error: *comparing
+a thing to something that cannot disagree with it.* First an invariant against
+itself, then a claim decomposition against its own premise, now two failures
+against each other. It is the characteristic failure mode of checking your own
+work, and the only defence that has held is asking, every time: **what would
+this check do if the system were broken?**
+
+**The fix.** Pairs where neither side resolved are excluded from the agreement
+rate and reported on their own line, and the benchmark says outright that
+nothing is comparable rather than printing a reassuring number.
+
+---
+
 ## Results that are not wins
 
 Reported here rather than left for a reader to notice.

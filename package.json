@@ -27,7 +27,8 @@
     "audit:contested:github": "tsx src/bench/contested.ts --github",
     "mcp": "tsx src/mcp/server.ts",
     "bench:latency": "tsx src/bench/latency.ts",
-    "bench:engine": "tsx src/bench/engine-probe.ts"
+    "bench:engine": "tsx src/bench/engine-probe.ts",
+    "bench:formulations": "tsx src/bench/formulations.ts"
   },
   "dependencies": {
     "@babel/parser": "^7.26.0",

@@ -89,6 +89,57 @@ export class PermissionOracle {
    * The bound is 3 because derivation in this model is at most two levels deep;
    * a lower bound is also a cheaper traversal.
    */
+  /**
+   * The same requirement, computed by the engine's GraphBLAS path procedure.
+   *
+   * `requiredSpaces` walks a Cypher variable-length pattern and reads a
+   * property off each source it lands on. This asks the engine for the actual
+   * *paths* out of the fact instead, via `algo.SSpaths`, and reads the spaces
+   * off the `Source` nodes inside them.
+   *
+   * Two reasons it earns its place rather than duplicating work:
+   *
+   * 1. **It is a genuinely different computation**, not a rephrasing. One is a
+   *    pattern match lowered to a walk; the other is a single-source shortest
+   *    paths computation over the relationship type. When two independent
+   *    engine formulations agree on all 623 derived facts, that is a much
+   *    stronger correctness statement than one formulation agreeing with
+   *    itself - which is the mistake this project has already made once.
+   *
+   * 2. **It returns the path, not just the endpoint.** The derivation chain a
+   *    reader sees in the console is then something the engine computed, rather
+   *    than something we reassembled client-side from a list of endpoints. A
+   *    path is the object our whole argument is about, and an embedding space
+   *    does not have one.
+   */
+  async requiredSpacesViaPaths(factId: string): Promise<string[]> {
+    const id = this.registry.intern(factId);
+    const spaces = new Set<string>();
+
+    try {
+      this.traversals++;
+      const paths = await this.client.singleSourcePaths(id, [R.RESTS_ON]);
+      for (const path of paths) {
+        for (const node of path.nodes) {
+          if (!node.labels.includes(L.Source)) continue;
+          const value = node.properties['space'];
+          // Tagged values arrive as { String: "..." }.
+          const space =
+            value && typeof value === 'object' && 'String' in (value as Record<string, unknown>)
+              ? ((value as Record<string, unknown>)['String'] as string)
+              : undefined;
+          if (typeof space === 'string' && space.length > 0) spaces.add(space);
+        }
+      }
+    } catch {
+      // Same discipline as the pattern walk: a traversal we cannot complete
+      // must never become an authorisation.
+      return ['__unresolvable__'];
+    }
+
+    return spaces.size > 0 ? [...spaces] : ['__unresolvable__'];
+  }
+
   async requiredSpaces(factId: string, hint?: { level: number; space: string }): Promise<string[]> {
     const cached = this.requiredCache.get(factId);
     if (cached) return cached;
