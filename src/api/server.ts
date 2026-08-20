@@ -163,6 +163,114 @@ app.post<{ Body: { principal?: string; question?: string } }>('/api/ask', async 
   };
 });
 
+/* -------------------------------------------------------------------------- *
+ * The gate, as a service.
+ *
+ * Everything above assumes you use Cordon's retrieval. This does not. Post the
+ * facts your own stack already retrieved, get back which of them this principal
+ * may see and, for the rest, exactly which spaces they are missing.
+ *
+ * Two properties make it adoptable, and both are measured rather than asserted:
+ * it is retrieval-agnostic (docs/RESULTS.md, the retriever sweep - the leak
+ * column does not move across three rankers), and it is stateless per call
+ * given the graph. Keep your stack; add the gate.
+ * -------------------------------------------------------------------------- */
+interface GateFact {
+  id: string;
+  /** Optional: supports, if this fact is not already in the graph. */
+  restsOn?: string[];
+  /** Optional: skip traversal when the caller already knows the requirement. */
+  requiredSpaces?: string[];
+}
+
+app.post<{ Body: { principal?: string; facts?: GateFact[] } }>(
+  '/v1/admissible',
+  async (request, reply) => {
+    if (!built || !oracle) return reply.code(503).send({ error: buildError ?? 'building' });
+    const { principal, facts } = request.body ?? {};
+    if (!principal || !Array.isArray(facts)) {
+      return reply.code(400).send({ error: 'body must include "principal" and "facts" (array)' });
+    }
+    if (facts.length > 512) {
+      return reply.code(413).send({ error: 'at most 512 facts per call' });
+    }
+
+    const started = performance.now();
+    const permitted = new Set(await oracle.permittedSpaces(principal));
+    if (permitted.size === 0 && !built.corpus.employees.has(principal)) {
+      return reply.code(404).send({ error: `unknown principal "${principal}"` });
+    }
+
+    const known = new Map(built.facts.map((f) => [f.id, f]));
+    const admittedOut: Array<{ id: string; requires: string[] }> = [];
+    const withheldOut: Array<{
+      id: string;
+      requires: string[];
+      missing: string[];
+      chain: string[];
+    }> = [];
+    let traversals = 0;
+
+    for (const item of facts) {
+      /*
+       * Requirement resolution, in order of trust. A caller-supplied
+       * requirement is honoured but never *reduces* what the graph knows: if
+       * the fact is in the graph we traverse it, because the caller's copy of
+       * the requirement is exactly the field that can be stale.
+       */
+      let requires: string[];
+      if (known.has(item.id)) {
+        requires = await oracle.requiredSpaces(item.id);
+        traversals++;
+      } else if (item.requiredSpaces && item.requiredSpaces.length > 0) {
+        requires = [...new Set(item.requiredSpaces)];
+      } else if (item.restsOn && item.restsOn.length > 0) {
+        // Unknown fact described by its supports: union what each support needs.
+        const union = new Set<string>();
+        for (const support of item.restsOn) {
+          if (known.has(support)) {
+            for (const space of await oracle.requiredSpaces(support)) union.add(space);
+            traversals++;
+          } else if (support.startsWith('s:')) {
+            const key = support.slice(2);
+            const artifact = built.corpus.artifacts.find((a) => a.key === key);
+            if (artifact) union.add(artifact.space);
+          }
+        }
+        requires = [...union];
+      } else {
+        /*
+         * Nothing to go on. Fail closed: a gate that admits what it cannot
+         * evaluate is not a gate.
+         */
+        withheldOut.push({ id: item.id, requires: [], missing: ['__unresolvable__'], chain: [] });
+        continue;
+      }
+
+      const missing = requires.filter((space) => !permitted.has(space));
+      if (missing.length === 0) admittedOut.push({ id: item.id, requires });
+      else {
+        const fact = known.get(item.id);
+        withheldOut.push({
+          id: item.id,
+          requires,
+          missing,
+          chain: fact ? fact.restsOn.slice(0, 8) : (item.restsOn ?? []).slice(0, 8),
+        });
+      }
+    }
+
+    return {
+      principal,
+      permitted: [...permitted],
+      admitted: admittedOut,
+      withheld: withheldOut,
+      traversals,
+      latencyMs: +(performance.now() - started).toFixed(2),
+    };
+  },
+);
+
 /** The derivation of one fact, retrieved from the graph. */
 app.get<{ Params: { id: string } }>('/api/fact/*', async (request, reply) => {
   if (!built || !oracle) return reply.code(503).send({ error: 'building' });
