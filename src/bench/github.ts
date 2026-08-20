@@ -27,7 +27,7 @@ import {
 } from '../cordon/corpus/github.js';
 
 const SNAPSHOT = 'fixtures/github/snapshot.json';
-const OWNER = process.env.CORDON_GH_OWNER ?? 'iamdflame';
+const OWNER = process.env.CORDON_GH_OWNER ?? 'cordon-demo';
 const REPOS = (
   process.env.CORDON_GH_REPOS ??
   [
@@ -45,22 +45,39 @@ const REPOS = (
   .map((s) => s.trim())
   .filter(Boolean);
 
-const GRAPH_ID = process.env.CORDON_GH_GRAPH ?? 'cordon-github';
+const GRAPH_ID = process.env.CORDON_GH_GRAPH ?? 'cordon-github2';
 
 function bar(title: string) {
   console.log(`\n\x1b[1m${title}\x1b[0m`);
   console.log('─'.repeat(74));
 }
 
-/** Ask GitHub, unauthenticated, whether a source is visible. */
+/**
+ * Ask GitHub, unauthenticated, whether a source is visible.
+ *
+ * Deliberately the HTML endpoint rather than the API. Two reasons, and the
+ * second one cost us a run:
+ *
+ *   - github.com/... is what a person actually sees, so a 404 here is the
+ *     claim in its most literal form.
+ *   - the unauthenticated API allows 60 requests an hour and then answers
+ *     *403* to everything. A 403 is not evidence of anything, and counting one
+ *     as a pass would be fabricating the result this whole section exists to
+ *     establish. Rate limiting is therefore detected and reported as
+ *     "unverified", never folded into pass or fail.
+ */
+const RATE_LIMITED = -429;
+
 async function anonymousStatus(url: string): Promise<number> {
-  const api = url
-    .replace('https://github.com/', 'https://api.github.com/repos/')
-    .replace(/\/issues\/(\d+)$/, '/issues/$1');
-  const res = await fetch(api, {
+  const res = await fetch(url, {
     method: 'GET',
-    headers: { accept: 'application/vnd.github+json', 'user-agent': 'cordon-audit' },
+    redirect: 'manual',
+    headers: { 'user-agent': 'cordon-audit (github.com/iamdflame/cordon)' },
   });
+  if (res.status === 403 || res.status === 429) {
+    const remaining = res.headers.get('x-ratelimit-remaining');
+    if (remaining === '0' || res.status === 429) return RATE_LIMITED;
+  }
   return res.status;
 }
 
@@ -395,12 +412,19 @@ async function main() {
 
   let asserted = 0;
   let passed = 0;
-  let failed: string[] = [];
+  let unverified = 0;
+  const failed: string[] = [];
   for (const locator of withheldPublic) {
-    const status = checked.get(locator) ?? (await anonymousStatus(locator));
-    checked.set(locator, status);
+    let status = checked.get(locator);
+    if (status === undefined) {
+      status = await anonymousStatus(locator);
+      checked.set(locator, status);
+      // Polite pacing; the point is to be sure of the answer, not to be quick.
+      await new Promise((r) => setTimeout(r, 250));
+    }
     asserted++;
     if (status === 404) passed++;
+    else if (status === RATE_LIMITED) unverified++;
     else failed.push(`${locator} -> ${status}`);
   }
 
@@ -409,14 +433,19 @@ async function main() {
   );
   console.log(
     `  anonymous GET returned 404                         ` +
-      `${passed === asserted ? '\x1b[32m' : '\x1b[31m'}${String(passed).padStart(6)}\x1b[0m`,
+      `${failed.length === 0 ? '\x1b[32m' : '\x1b[31m'}${String(passed).padStart(6)}\x1b[0m`,
   );
-  if (failed.length > 0) {
-    console.log(`  \x1b[31mFAILED\x1b[0m`);
-    for (const f of failed.slice(0, 5)) console.log(`    ${f}`);
-  } else if (asserted > 0) {
+  if (unverified > 0) {
     console.log(
-      `\n  \x1b[32m${passed}/${asserted} pass.\x1b[0m \x1b[2mEvery source Cordon withheld from the anonymous\n` +
+      `  \x1b[33munverified (rate limited)                          ${String(unverified).padStart(6)}\x1b[0m`,
+    );
+  }
+  if (failed.length > 0) {
+    console.log(`  \x1b[31mFAILED  ${failed.length}\x1b[0m`);
+    for (const f of failed.slice(0, 5)) console.log(`    ${f}`);
+  } else if (passed > 0) {
+    console.log(
+      `\n  \x1b[32m${passed}/${passed + failed.length} pass.\x1b[0m \x1b[2mEvery source Cordon withheld from the anonymous\n` +
         `  principal is genuinely unreachable to it. The test oracle is GitHub.\x1b[0m`,
     );
   }
@@ -440,10 +469,12 @@ async function main() {
       console.log(`  asker lacks  \x1b[31m${leak.missing.join(', ')}\x1b[0m`);
       console.log(`  source    ${leak.locator}`);
       console.log(
-        `  anonymous GET -> \x1b[1m${status}\x1b[0m ` +
+        `  anonymous GET -> \x1b[1m${status === RATE_LIMITED ? 'rate limited' : status}\x1b[0m ` +
           (status === 404
-            ? '\x1b[32m✓ GitHub refuses. The fact was still disclosed.\x1b[0m'
-            : '\x1b[33m(expected 404)\x1b[0m'),
+            ? '\x1b[32m/ GitHub refuses. The fact was still disclosed.\x1b[0m'
+            : status === RATE_LIMITED
+              ? '\x1b[33m(unverified this run)\x1b[0m'
+              : '\x1b[33m(expected 404)\x1b[0m'),
       );
     }
     if (publicLeaks.length > sample.length) {

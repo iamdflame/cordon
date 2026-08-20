@@ -2,7 +2,7 @@
 
 Regenerate with `npm run audit:github`. No credentials needed — it replays
 `fixtures/github/snapshot.json`, captured from the live API on
-2026-08-19. Re-capture with `--fetch` and a `gh` login.
+2026-08-20. Re-capture with `--fetch` and a `gh` login.
 
 The strongest objection to the [HERB results](RESULTS.md) is that we invented
 the access control we then enforced. This run removes that objection: the
@@ -13,11 +13,16 @@ is an HTTP status code.
 
 | repository | visibility | collaborators |
 |---|---|---|
-| `iamdflame/cordon-demo-atlas` | **private** | 1 |
-| `iamdflame/cordon-demo-borealis` | **private** | 1 |
-| `iamdflame/cordon-demo-handbook` | public | 1 |
+| `cordon-demo/cordon-demo-atlas` | **private** | 1 |
+| `cordon-demo/cordon-demo-borealis` | **private** | 1 |
+| `cordon-demo/cordon-demo-cygnus` | **private** | 1 |
+| `cordon-demo/cordon-demo-draco` | **private** | 1 |
+| `cordon-demo/cordon-demo-fornax` | **private** | 1 |
+| `cordon-demo/cordon-demo-handbook` | public | 1 |
+| `cordon-demo/cordon-demo-eridanus` | public | 1 |
+| `cordon-demo/cordon-demo-gemini` | public | 1 |
 
-13 issues, 0 comments.
+44 issues, 0 comments.
 
 **Principals** are real accounts plus `public`, the unauthenticated internet.
 A public repository is readable by `public` because it genuinely is. A private
@@ -34,8 +39,8 @@ Only the first stage differs from the HERB run: a connector that returns the
 same `Corpus` shape. Extraction, entity resolution, fact derivation, ingest and
 the admissibility rule are the same code, unmodified.
 
-26 facts (3 derived) over 13 sources,
-2 principals, 52 (fact, principal) pairs.
+86 facts (26 derived) over 44 sources,
+13 principals, 1,118 (fact, principal) pairs.
 
 ## Disclosure
 
@@ -44,8 +49,8 @@ attribution for it. These are the readings real systems use.
 
 | gate | leaked |
 |---|---|
-| filed-under | 0 |
-| any-source | 3 |
+| filed-under | 105 |
+| any-source | 292 |
 | cordon | 0 |
 
 - **filed-under** — gate by the single space the node carries. What a graph
@@ -57,36 +62,36 @@ attribution for it. These are the readings real systems use.
 
 ## The gates disagree with each other
 
-3 of the 3 (fact, principal) pairs that must be withheld would be
+292 of the 309 (fact, principal) pairs that must be withheld would be
 decided differently depending on which of its own sources the node was
 attributed to.
 
-> Priya Raman (mentioned) is active across 3 product areas: cordon-demo-atlas, cordon-demo-borealis, cordon-demo-handbook.
+> Priya Raman (mentioned) is active across 5 product areas: cordon-demo-atlas, cordon-demo-borealis, cordon-demo-cygnus, cordon-demo-fornax, cordon-demo-handbook.
 >
-> asker `public` — attributed to `cordon-demo-borealis`: **withheld**; attributed to `cordon-demo-handbook`: **disclosed**
+> asker `public` — attributed to `cordon-demo-fornax`: **withheld**; attributed to `cordon-demo-handbook`: **disclosed**
 
-> Elena Fischer (mentioned) is active across 2 product areas: cordon-demo-borealis, cordon-demo-handbook.
+> Priya Raman (mentioned) is active across 5 product areas: cordon-demo-atlas, cordon-demo-borealis, cordon-demo-cygnus, cordon-demo-fornax, cordon-demo-handbook.
 >
-> asker `public` — attributed to `cordon-demo-borealis`: **withheld**; attributed to `cordon-demo-handbook`: **disclosed**
+> asker `team:billing` — attributed to `cordon-demo-fornax`: **withheld**; attributed to `cordon-demo-atlas`: **disclosed**
 
-> 2 people contribute to both cordon-demo-borealis and cordon-demo-handbook, forming a shared delivery path between the two areas.
+> Priya Raman (mentioned) is active across 5 product areas: cordon-demo-atlas, cordon-demo-borealis, cordon-demo-cygnus, cordon-demo-fornax, cordon-demo-handbook.
 >
-> asker `public` — attributed to `cordon-demo-borealis`: **withheld**; attributed to `cordon-demo-handbook`: **disclosed**
+> asker `team:corpdev` — attributed to `cordon-demo-fornax`: **withheld**; attributed to `cordon-demo-borealis`: **disclosed**
 
 Same graph, same permissions, same asker, opposite answer. Cordon returns the
 same answer under every attribution, because it never reads the attribution.
 
 ## Ground truth
 
-> Priya Raman (mentioned) is active across 3 product areas: cordon-demo-atlas, cordon-demo-borealis, cordon-demo-handbook.
+> Priya Raman (mentioned) is active across 5 product areas: cordon-demo-atlas, cordon-demo-borealis, cordon-demo-cygnus, cordon-demo-fornax, cordon-demo-handbook.
 
-Rests on `cordon-demo-handbook`, `cordon-demo-borealis`, `cordon-demo-atlas`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-borealis`, `cordon-demo-atlas`.
+Rests on `cordon-demo-fornax`, `cordon-demo-borealis`, `cordon-demo-atlas`, `cordon-demo-handbook`, `cordon-demo-cygnus`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-fornax`, `cordon-demo-borealis`, `cordon-demo-atlas`, `cordon-demo-cygnus`.
 
-Source: https://github.com/iamdflame/cordon-demo-borealis/issues/4
+Source: https://github.com/cordon-demo/cordon-demo-fornax/issues/2
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}' \
-    https://api.github.com/repos/iamdflame/cordon-demo-borealis/issues/4
+    https://api.github.com/repos/cordon-demo/cordon-demo-fornax/issues/2
 404
 ```
 
@@ -94,15 +99,15 @@ GitHub refuses to show the document. The fact derived from it was disclosed anyw
 
 ---
 
-> Elena Fischer (mentioned) is active across 2 product areas: cordon-demo-borealis, cordon-demo-handbook.
+> Elena Fischer (mentioned) is active across 3 product areas: cordon-demo-borealis, cordon-demo-fornax, cordon-demo-handbook.
 
-Rests on `cordon-demo-handbook`, `cordon-demo-borealis`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-borealis`.
+Rests on `cordon-demo-fornax`, `cordon-demo-borealis`, `cordon-demo-handbook`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-fornax`, `cordon-demo-borealis`.
 
-Source: https://github.com/iamdflame/cordon-demo-borealis/issues/4
+Source: https://github.com/cordon-demo/cordon-demo-fornax/issues/3
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}' \
-    https://api.github.com/repos/iamdflame/cordon-demo-borealis/issues/4
+    https://api.github.com/repos/cordon-demo/cordon-demo-fornax/issues/3
 404
 ```
 
@@ -110,15 +115,15 @@ GitHub refuses to show the document. The fact derived from it was disclosed anyw
 
 ---
 
-> 2 people contribute to both cordon-demo-borealis and cordon-demo-handbook, forming a shared delivery path between the two areas.
+> Ingrid Holm (mentioned) is active across 4 product areas: cordon-demo-borealis, cordon-demo-handbook, cordon-demo-eridanus, cordon-demo-gemini.
 
-Rests on `cordon-demo-handbook`, `cordon-demo-borealis`, `cordon-demo-atlas`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-borealis`, `cordon-demo-atlas`.
+Rests on `cordon-demo-gemini`, `cordon-demo-borealis`, `cordon-demo-eridanus`, `cordon-demo-handbook`. The anonymous asker holds `cordon-demo-gemini`, `cordon-demo-eridanus`, `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-borealis`.
 
-Source: https://github.com/iamdflame/cordon-demo-borealis/issues/4
+Source: https://github.com/cordon-demo/cordon-demo-borealis/issues/5
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}' \
-    https://api.github.com/repos/iamdflame/cordon-demo-borealis/issues/4
+    https://api.github.com/repos/cordon-demo/cordon-demo-borealis/issues/5
 404
 ```
 

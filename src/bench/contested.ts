@@ -15,10 +15,13 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { HydraClient } from '../hydra/client.js';
 import { buildGraph } from '../cordon/pipeline.js';
+import { corpusFromSnapshot, loadSnapshot } from '../cordon/corpus/github.js';
 import {
   extractClaims,
   findContradictions,
   measureDisclosureDependentTruth,
+  sharedSourceDisagreements,
+  OPPOSING,
   type Claim,
 } from '../cordon/contradict.js';
 
@@ -35,12 +38,16 @@ const c = {
 
 async function main() {
   const sample = process.argv.includes('--sample');
+  const useGitHub = process.argv.includes('--github');
   const client = new HydraClient();
 
   const built = await buildGraph({
     dataRoot: 'data/herb',
     client,
-    graphId: process.env.CORDON_GRAPH ?? 'cordon-v1',
+    ...(useGitHub
+      ? { corpus: corpusFromSnapshot(loadSnapshot('fixtures/github/snapshot.json')) }
+      : {}),
+    graphId: useGitHub ? 'cordon-github' : process.env.CORDON_GRAPH ?? 'cordon-v1',
     skipIngest: true,
     ...(sample ? { spaces: 8 } : {}),
     onProgress: (phase, _d, _t, detail) => {
@@ -52,28 +59,62 @@ async function main() {
 
   console.log(`\n${c.bold}Extracting claims${c.reset} ${c.dim}deterministic, closed predicate set${c.reset}`);
   const claims: Claim[] = [];
+
+  /*
+   * Two independent signals, reported separately so a reader can see which is
+   * doing the work.
+   *
+   * The pattern signal fires on prose that asserts something about a person or
+   * a project. HERB's documents are long-form market research and specs and
+   * almost never do that - name and role never co-occur once in 4.7M
+   * characters - so on HERB it contributes almost nothing. That is a fact about
+   * the corpus, not a failure of the detector, and saying so is better than
+   * tuning until a number appears.
+   *
+   * The shared-source signal is where HERB's real disagreement lives.
+   */
   for (const artifact of corpus.artifacts) {
     const entities = entitiesBySource.get(artifact.key) ?? new Set<string>();
     claims.push(...extractClaims(artifact, corpus, entities));
   }
+  const patternClaims = claims.length;
+  claims.push(...sharedSourceDisagreements(corpus));
+  const sharedClaims = claims.length - patternClaims;
 
   const byPredicate = new Map<string, number>();
   for (const claim of claims) byPredicate.set(claim.predicate, (byPredicate.get(claim.predicate) ?? 0) + 1);
-  console.log(`  ${claims.length.toLocaleString()} claims extracted`);
+  console.log(
+    `  ${claims.length.toLocaleString()} claims extracted  ` +
+      `(${patternClaims.toLocaleString()} from prose patterns, ${sharedClaims.toLocaleString()} from shared sources)`,
+  );
   for (const [predicate, n] of [...byPredicate].sort((a, b) => b[1] - a[1])) {
     console.log(`    ${predicate.padEnd(10)} ${n.toLocaleString().padStart(8)}`);
   }
 
-  const contradictions = findContradictions(claims);
+  const all = findContradictions(claims);
+  /*
+   * Only opposing predicates count as contradiction. Divergent descriptions of
+   * a shared source are paraphrases and are reported separately - calling one a
+   * contradiction would be the overclaim that costs a reader their trust in
+   * every other number here.
+   */
+  const contradictions = all.filter((x) => OPPOSING.has(x.predicate));
+  const divergences = all.filter((x) => x.predicate === 'description');
   const crossSpace = contradictions.filter((x) => x.crossSpace);
 
-  console.log(`\n${c.bold}Contradictions${c.reset}`);
+  console.log(`\n${c.bold}Contradictions${c.reset} ${c.dim}opposing claims only${c.reset}`);
   console.log(`  contested (subject, predicate) pairs   ${contradictions.length.toLocaleString().padStart(8)}`);
   console.log(
     `  ...where the sides sit in different spaces ${c.gold}${crossSpace.length.toLocaleString().padStart(7)}${c.reset}`,
   );
 
+  console.log(
+    `\n${c.bold}Description divergence${c.reset} ${c.dim}not contradiction - reported separately${c.reset}`,
+  );
+  console.log(`  shared sources described differently   ${divergences.length.toLocaleString().padStart(8)}`);
+
   const truth = measureDisclosureDependentTruth(contradictions, permissions.readable);
+  const divergenceTruth = measureDisclosureDependentTruth(divergences, permissions.readable);
 
   console.log(`\n${c.bold}Disclosure-dependent truth${c.reset} ${c.dim}contest against access${c.reset}\n`);
   console.log(`  facts contested globally                       ${truth.contested.toLocaleString().padStart(9)}`);

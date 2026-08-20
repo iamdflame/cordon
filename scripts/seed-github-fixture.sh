@@ -18,7 +18,7 @@
 
 set -euo pipefail
 
-OWNER=${CORDON_GH_OWNER:-$(gh api user --jq .login)}
+OWNER=${CORDON_GH_OWNER:-cordon-demo}
 
 PRIVATE_REPOS=(atlas borealis cygnus draco fornax)
 PUBLIC_REPOS=(handbook eridanus gemini)
@@ -179,3 +179,39 @@ issue gemini "Community questions" \
 echo
 echo "done. re-fetch the snapshot with:"
 echo "  npm run audit:github -- --fetch"
+
+# ---------------------------------------------------- deliberate contradictions
+#
+# These are seeded on purpose and the audit labels them as seeded.
+#
+# HERB contains no detectable semantic contradiction - it is generated per
+# product and is internally consistent - so the contradiction mechanism has
+# nowhere to fire there. Rather than tune a detector until a number appears, the
+# opposed claims are planted here, in a corpus we control, and the *measurement*
+# is what is being demonstrated: which side of a disagreement you see is decided
+# by which repository you can read.
+#
+# Each pair asserts an opposing status or decision about the same subject from
+# two repositories with different audiences.
+
+echo "contradictions (seeded, labelled as such)"
+
+issue atlas "Status: the ledger migration" \
+"As of this week the ledger migration is on track. Priya Raman confirmed the freeze window holds."
+issue draco "Dependency check: ledger" \
+"For pricing purposes, note that the ledger migration is blocked. Tomas Nowak raised this against the cutover date."
+
+issue gemini "Roadmap status: the SDK release" \
+"The SDK release is on track for this quarter. Ingrid Holm confirmed."
+issue cygnus "Release hold during incident" \
+"Until the incident closes, the SDK release is paused. Sofia Almeida is the approver."
+
+issue fornax "Decision: the headcount plan" \
+"The headcount plan is approved. Elena Fischer signed off."
+issue draco "Planning inputs" \
+"Pending the pricing outcome, the headcount plan is rejected. Sofia Almeida asked for a resubmission."
+
+issue handbook "Process: the incident review" \
+"By default the incident review is complete once the write-up is filed."
+issue cygnus "Review status" \
+"The incident review is delayed. Rafael Costa has not filed the write-up."

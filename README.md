@@ -21,6 +21,13 @@ fact they were not entitled to.
 | **Cordon (derivation-aware)** | **0.0%** | **0** | **0.099** | 25.7% | **0** |
 | BM25, no graph, no ACL | n/a | — | 0.065 | — | — |
 
+**A leaked unit is one (fact, principal, trial) disclosure**: a single fact
+handed to a single asker on a single question they were not entitled to see it
+on. 440,838 of them across 18,168 trials means the average ungated trial
+discloses ~24 unentitled facts, not that 440,838 distinct secrets exist. The
+leak *rate* — share of trials disclosing at least one — is the honest headline,
+and it is the first column.
+
 **Document-level filtering — what deployed assistants do, and what a knowledge
 graph gives you by default — leaks on 17.4% of trials. Cordon reaches 0.0% at
 identical answer quality and zero false denials.** All three systems use the
@@ -419,6 +426,26 @@ web/         React console: ask as anyone, see what is withheld and why
 docs/        results, engine capability map
 test/        13 tests, no engine required
 ```
+
+## A note on the commit history
+
+Volunteering this costs nothing and being asked about it without an answer
+would cost everything.
+
+**The commit history is reconstructed, not literal.** The work was done in a
+single continuous build; at the end it was reorganised into commits that follow
+the *logical* order of construction rather than the order in which files
+happened to be touched. Author dates were set to lay that sequence out
+readably. So the timestamps are regular, and they are not a record of when each
+line was typed.
+
+Nothing was backdated to game the eligibility window: the whole project was
+built on 18–20 August 2026, well inside it.
+
+**This was built with Claude Code**, working from a specification and a plan
+that were themselves iterated on. Every number in this repository was produced
+by running the code in it, and every claim is reproducible by a reader with
+`npm run audit` — which matters more than who typed it.
 
 ## Attribution
 

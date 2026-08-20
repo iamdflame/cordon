@@ -27,8 +27,24 @@
 
 import type { Artifact, Corpus } from './model.js';
 
-/** Predicates we are willing to call a contradiction about. */
-export type Predicate = 'role' | 'status' | 'decision' | 'timing';
+/**
+ * What a claim is about.
+ *
+ * `description` is deliberately separated from the rest and is **not** reported
+ * as contradiction. See `sharedSourceDisagreements` for why: divergent
+ * descriptions of the same source are paraphrases, and calling a paraphrase a
+ * contradiction would be the kind of overclaim that costs a reader their trust
+ * in every other number here.
+ */
+export type Predicate = 'role' | 'status' | 'decision' | 'timing' | 'description';
+
+/** Predicates where two different values genuinely oppose each other. */
+export const OPPOSING: ReadonlySet<Predicate> = new Set<Predicate>([
+  'role',
+  'status',
+  'decision',
+  'timing',
+]);
 
 export interface Claim {
   subject: string;
@@ -137,7 +153,8 @@ export function extractClaims(
   /* ---- status and decision, about a named project or document ----------- */
   const objectPattern =
     '((?:[A-Z][A-Za-z0-9]*(?:Force|Doc|Document|Spec|Plan|Roadmap|Migration|Launch|Release))' +
-    '|(?:the [a-z]+ (?:migration|launch|release|rollout|cutover|integration|review)))';
+    '|(?:the [A-Za-z]+ (?:migration|launch|release|rollout|cutover|integration|review|plan|' +
+    'rework|notification|assessment)))';
 
   for (const [predicate, words] of [
     ['status', STATUS_WORDS],
@@ -179,6 +196,70 @@ export function extractClaims(
     });
   }
 
+  return claims;
+}
+
+/**
+ * Description divergence, which is what HERB actually contains - and which is
+ * not the same thing as contradiction.
+ *
+ * Thirty-three artifact ids appear in more than one product: shared links,
+ * cited by several teams. Twenty-eight of them carry different text in
+ * different spaces.
+ *
+ * We looked hard for semantic contradiction in HERB and did not find it. Name
+ * and role never co-occur once in 4.7M characters of document text; there are
+ * no conflicting status or decision claims. HERB is generated per product and
+ * is internally consistent, and saying so is better than tuning a detector
+ * until a number appears.
+ *
+ * What the divergence *does* show is real and worth reporting on its own terms:
+ * **which version of a shared source's description you receive is decided by
+ * which space you can read.** These are paraphrases - "GitHub repository of the
+ * TensorFlow library for machine learning" against "GitHub repo of the
+ * TensorFlow library for deep learning applications" - so nobody is being told
+ * opposite things. They are being told *different* things, by an assistant that
+ * presents each as the description.
+ *
+ * It is also the same structure that produced our worst bug: collapsing those
+ * ids into one node gave it whichever space loaded last, and every fact resting
+ * on it inherited the wrong access requirement.
+ */
+export function sharedSourceDisagreements(corpus: Corpus): Claim[] {
+  const byCitation = new Map<string, Artifact[]>();
+  for (const artifact of corpus.artifacts) {
+    const list = byCitation.get(artifact.id);
+    if (list) list.push(artifact);
+    else byCitation.set(artifact.id, [artifact]);
+  }
+
+  const claims: Claim[] = [];
+  for (const [citation, copies] of byCitation) {
+    if (copies.length < 2) continue;
+
+    /*
+     * Normalise before comparing. Two teams citing the same link with different
+     * whitespace are not disagreeing, and counting them as though they were
+     * would make the measurement worthless.
+     */
+    const seen = new Map<string, Artifact>();
+    for (const copy of copies) {
+      const key = copy.text.toLowerCase().replace(/\s+/g, ' ').trim();
+      if (!seen.has(key)) seen.set(key, copy);
+    }
+    if (seen.size < 2) continue;
+
+    for (const [normalised, copy] of seen) {
+      claims.push({
+        subject: citation,
+        predicate: 'description',
+        value: normalised,
+        quote: copy.text.replace(/\s+/g, ' ').trim().slice(0, 180),
+        space: copy.space,
+        source: copy.key,
+      });
+    }
+  }
   return claims;
 }
 
