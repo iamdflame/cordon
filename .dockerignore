@@ -1,0 +1,9 @@
+node_modules
+web/node_modules
+web/dist
+.hydra-data
+.cache
+.git
+data
+build.log
+artifacts

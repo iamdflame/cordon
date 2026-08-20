@@ -2,50 +2,45 @@
 
 **Derived knowledge inherits the access control of everything it was derived from.**
 
-**Hack Hydra 2026 — Track 01: Enterprise Context + Ontology**
+A fact inferred from three documents is not a document. It has no ACL of its own —
+so document-level filtering, which is what every enterprise AI assistant does,
+has no answer for it.
 
-**Demo video:** _<add URL before submitting>_
+**Demo video:** _<add URL before submitting>_ · **Live console:** _<add URL>_
+· `docker compose up`
 
-[Results on HERB](docs/RESULTS.md) · [Real GitHub permissions](docs/RESULTS-GITHUB.md) ·
-**[The threat model](docs/THREAT-MODEL.md)** · [Disclosure-dependent truth](docs/CONTESTED.md) ·
-[Soundness](docs/SOUNDNESS.md) · [Latency](docs/LATENCY.md) ·
-[What runs where](docs/WHERE-IT-RUNS.md) · [Engine notes](docs/HYDRADB-ENGINE-NOTES.md) ·
-[DKL benchmark](bench/dkl/) · [Demo guide](docs/DEMO.md)
+[Results](docs/RESULTS.md) · [**The aggregation attack**](docs/ATTACK.md) ·
+[Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Threat model](docs/THREAT-MODEL.md) ·
+[Soundness](docs/SOUNDNESS.md) · [What runs where](docs/WHERE-IT-RUNS.md) ·
+[Engine notes](docs/HYDRADB-ENGINE-NOTES.md) · [DKL benchmark](bench/dkl/)
 
 ---
 
-## The result
+## The whole argument, in one screen
 
-Run 1,514 HERB questions as 12 different principals sampled across the access
-spectrum — 18,168 trials per system — and count how often each hands someone a
-fact they were not entitled to.
+| | document-level ACL<br>*what ships today* | **Cordon** |
+|---|---|---|
+| leak rate, 18,168 trials per system | 17.4% | **0.0%** |
+| answer F1 | 0.099 | **0.099** |
+| false denials | 0 | **0** |
+| disclosure decided by ingest order | **1,008 of 7,280** protected pairs | **never** |
+| aggregation leaks *(real GitHub permissions)* | 16 | 16 → **0** under the claim-aware rule<br>*we found this in our own system* |
+| verified against | its own model of access | **GitHub's own 404** |
 
-| system | leak rate | leaked units | answer F1 | abstention | false denials |
-|---|---|---|---|---|---|
-| ungated knowledge graph | 100.0% | 440,838 | 0.075 | 0.0% | 0 |
-| document-level ACL filtering | **17.4%** | **10,617** | 0.099 | 22.8% | 0 |
-| **Cordon (derivation-aware)** | **0.0%** | **0** | **0.099** | 25.7% | **0** |
-| BM25, no graph, no ACL | n/a | — | 0.065 | — | — |
+Everything above regenerates: `npm run audit`, `npm run audit:github`,
+`npm run attack`. Raw artifacts carrying the git SHA and timestamp are committed
+under [`artifacts/`](artifacts/), so every number in this file opens onto the
+run that produced it.
 
-**A leaked unit is one (fact, principal, trial) disclosure**: a single fact
-handed to a single asker on a single question they were not entitled to see it
-on. 440,838 of them across 18,168 trials means the average ungated trial
-discloses ~24 unentitled facts, not that 440,838 distinct secrets exist. The
-leak *rate* — share of trials disclosing at least one — is the honest headline,
-and it is the first column.
+**A leaked unit is one (fact, principal, trial) disclosure** — one fact handed
+to one asker on one question they were not entitled to. The leak *rate* is the
+share of trials disclosing at least one, and it is the honest headline.
 
-**Document-level filtering — what deployed assistants do, and what a knowledge
-graph gives you by default — leaks on 17.4% of trials. Cordon reaches 0.0% at
-identical answer quality and zero false denials.** All three systems use the
-same retrieval and the same answer assembly; the only difference is what each
-is willing to disclose.
+---
 
-Both gated systems *beat* the ungated graph on F1 (0.099 vs 0.075), because
-refusing evidence the asker has no business seeing also removes noise.
+## Three findings, in order of how much they should worry you
 
-Reproduce: `npm run audit` — or `npm run audit -- --sample` in under ten minutes.
-
-### Where the leak lives
+### 1. Document-level filtering is exactly correct — until it infers
 
 | derivation depth | facts | ungated | document-acl | **cordon** |
 |---|---|---|---|---|
@@ -54,47 +49,70 @@ Reproduce: `npm run audit` — or `npm run audit -- --sample` in under ten minut
 | 2 — derived from derived | 60 | 4,176 | 400 | **0** |
 | 3 — derived from those | 60 | 65,556 | 6,591 | **0** |
 
-Document-level filtering is **exactly correct at depth 0** and fails the moment
-knowledge is synthesised across sources. That is not an implementation defect —
-it is the ceiling of the idea. A fact derived from three documents is not a
-document, so there is no document whose ACL could govern it.
+Zero at depth 0. That is not a compliment we are paying the baseline — it is the
+finding. Document filtering does not have a bug; it has a **ceiling**, and the
+ceiling is the first inference.
 
-### The baseline is not just wrong — it is arbitrary
+### 2. The baseline is not just wrong — it is *arbitrary*
 
-A derived fact carries one space, assigned when the node was written: whichever
-supporting document the writer happened to reach first. That assignment is what
-a document-level gate reads.
-
-So for every (fact, principal) pair the fact must be withheld from, we asked
-whether the gate would have answered differently had the same node been
-attributed to a different one of *its own sources*.
+A derived fact carries one space, assigned by whichever source the writer
+reached first. That assignment is what a document gate reads. So we asked: would
+it have answered differently had the node been filed under a different one of
+*its own sources*?
 
 | | pairs |
 |---|---|
 | must be withheld | 7,280 |
-| **decision flips with attribution** | **1,008 — 13.8%** |
-| decision stable | 6,272 |
+| **answer flips with attribution** | **1,008 — 13.8%** |
+| answer stable | 6,272 |
 
-Same graph, same permissions, same person asking — opposite answer. On one pair
-in seven, a document-level gate's security decision is settled by ingest order.
+Same graph, same permissions, same person asking, opposite answer. On real
+GitHub permissions it is worse: **292 of 309 — 94%**.
 
-Cordon's answer is invariant under attribution, because it never reads the
-attribution. It reads the derivation.
+A security decision settled by ingest order is not a security decision. Cordon's
+answer never moves, because it never reads the attribution. It reads the
+derivation.
 
-### Audience collapse
+### 3. The attack nobody else can even express
 
-A fact's audience is the intersection of the audiences of everything it rests
-on, so it shrinks as derivation deepens.
+Two facts you *are* entitled to can together determine a third you are not.
+Document-level filtering cannot defend against this **even in principle**,
+because the thing being aggregated is not a document.
 
-| depth | mean spaces required | mean audience (of 530) | visible to nobody |
+We formalised it, proved what is impossible, and mined the rest from the graph
+rather than inventing examples.
+
+> **Theorem 1.** An attacker cannot climb the derivation edges. `required(f)` is
+> the union of its supports' requirements, so holding every part of a conclusion
+> already entitles you to the conclusion. *Checked: 0 counterexamples.*
+
+> **Theorem 2.** Cordon is closed under aggregation exactly when every claim
+> about a space is only asserted by facts resting on that space — *claim
+> locality*. So the exposure is a property of **the corpus**, not of the rule.
+
+So we measured the premise instead of assuming it, on a fixture seeded with the
+cross-repository references real issues are full of:
+
+| gate | denied pairs | aggregation leaks | over-restricted |
 |---|---|---|---|
-| 0 | 1.00 | 46.2 | 0% |
-| 1 | 3.52 | 17.9 | 47% |
-| 2 | 4.85 | 0.0 | 100% |
-| 3 | 4.93 | 0.0 | 100% |
+| ungated | 130 | 130 | — |
+| document-acl | 130 | 16 | — |
+| **cordon** | 130 | **16** | — |
+| **cordon, claim-aware** | 130 | **0** | 54 |
 
-A knowledge graph that serves derived facts to anyone who can read *any* of
-their sources discloses to 46+ people what ought to be visible to none.
+**Cordon leaks 16.** That is our own system failing, and we are reporting it
+because it locates the mechanism exactly: a *public* issue that names a
+*private* repository —
+
+> "Ingrid Holm notes the SDK release depends on **cordon-demo-borealis**
+> integration work." — public repo, asserting a claim about a private one
+
+— so the fix follows from the diagnosis. Widen the requirement to include the
+spaces a fact *names*, not only where its evidence sits. Leaks go to zero, and
+it costs 54 additional withholdings. Both rules ship with their numbers; the
+operator picks.
+
+[The formalism, the mined instances, the red team →](docs/ATTACK.md)
 
 ---
 
@@ -531,7 +549,28 @@ against a requirement recomputed from the corpus.
 
 ## Running it
 
-**Requirements:** Docker, Node 20+.
+**One command, from a clean checkout:**
+
+```bash
+docker compose up          # or: make demo
+```
+
+HydraDB, the sample graph, the API and the console at
+[localhost:5173](http://localhost:5173). Deliberately the sample rather than the
+full corpus — the full graph is 226,357 edges and about an hour of write-bound
+ingest, and a first run should end in a working console rather than a progress
+bar.
+
+**Reproducing the published numbers** (needs the full graph):
+
+```bash
+make audit                 # build:graph, audit, audit:github, attack
+```
+
+<details>
+<summary>Running it without Docker</summary>
+
+**Requirements:** Docker (for HydraDB), Node 20+.
 
 ```bash
 npm install
@@ -575,6 +614,8 @@ cd web && npm install && npm run dev   # :5173
 
 Ask as any of 530 people, watch the answer change, and see each withheld fact
 with the derivation and the missing space that caused it.
+
+</details>
 
 ---
 
