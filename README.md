@@ -19,6 +19,7 @@ has no answer for it.
 > Or click the console above — it is a live HydraDB instance, not a mock.
 
 [Results](docs/RESULTS.md) · [**The aggregation attack**](docs/ATTACK.md) ·
+[**What we got wrong**](docs/CORRECTIONS.md) ·
 [Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Disclosure-dependent truth](docs/CONTESTED.md) ·
 [Soundness](docs/SOUNDNESS.md) · [**HydraDB capability map**](docs/HYDRADB-ENGINE-NOTES.md) ·
 [DKL benchmark](bench/dkl/) · [Demo guide](docs/DEMO.md)
@@ -72,6 +73,35 @@ Everything above regenerates: `npm run audit`, `npm run audit:github`,
 `npm run attack`. Raw artifacts carrying the git SHA and timestamp are committed
 under [`artifacts/`](artifacts/), so every number in this file opens onto the
 run that produced it.
+
+### How to catch us being wrong
+
+Every number above is a mean over committed rows, not a figure typed into a
+markdown file:
+
+```bash
+npm run audit   # writes artifacts/audit-rows.jsonl + audit-summary.json
+npm test        # recomputes every score from those rows; fails on disagreement
+```
+
+The suite fails if the README, the summary and the raw rows disagree; **if the
+three evaluation arms were handed different evidence**; or if any Cypher in the
+source breaks a constraint the engine actually enforces.
+
+That middle one is the claim everything here rests on. "Identical retrieval,
+only disclosure differs" used to be a comment. Each arm now hashes the candidate
+list it was handed, and the audit **exits non-zero** if the three ever disagree —
+a comparison between arms that saw different evidence is not a result, so it
+should not be publishable.
+
+Runs record a sha256 over the corpus, the git SHA, and the seed, because "we ran
+it on HERB" is not reproducible if HERB can move underneath us.
+
+**[We keep a list of what we got wrong →](docs/CORRECTIONS.md)** — an invariant
+that compared a value to itself and hid a real bug for hours; a claim
+decomposition that made its own premise true by construction; a demo URL that
+404'd for the wrong reason; an assertion that was really a rate limit. Numbers
+that only ever go up are a warning sign, not a track record.
 
 **A leaked unit is one (fact, principal, trial) disclosure** — one fact handed
 to one asker on one question they were not entitled to. The leak *rate* is the

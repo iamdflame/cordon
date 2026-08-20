@@ -650,6 +650,22 @@ hands over the fact derived from it.</span>
     <p class="eyebrow">06 &middot; how to disbelieve us</p>
     <h2>Every number opens onto the run that produced it</h2>
     <p class="lede">
+      Not one figure here is typed into a markdown file. The audit emits every trial as a
+      committed row; the test suite recomputes each published score from those rows and
+      <strong>fails if the README, the summary and the raw data disagree</strong>.
+    </p>
+
+    <div class="admission">
+      <span class="tag">The claim everything rests on, now checked</span>
+      <p class="body-text" style="margin-bottom:0">
+        &ldquo;Identical retrieval, only disclosure differs&rdquo; used to be a comment in the
+        source. Each of the three arms now hashes the candidate list it was handed, computed
+        from its own view rather than a shared variable, and the audit <strong>exits
+        non-zero</strong> if they ever disagree. A comparison between arms that saw different
+        evidence is not a result, so it should not be publishable.
+      </p>
+    </div>
+    <p class="lede">
       Cordon&rsquo;s whole thesis is auditability, so nothing here is estimated, projected or
       illustrative. Raw artifacts carrying the git SHA and timestamp are committed alongside the
       code.
@@ -695,6 +711,7 @@ hands over the fact derived from it.</span>
       </div>
       <div class="foot-col">
         <h4>Method</h4>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/CORRECTIONS.md">What we got wrong</a>
         <a href="https://github.com/iamdflame/cordon/blob/main/docs/SOUNDNESS.md">Soundness proof</a>
         <a href="https://github.com/iamdflame/cordon/blob/main/docs/DEMO.md">Demo guide</a>
         <a href="https://github.com/iamdflame/cordon/blob/main/docs/HYDRADB-ENGINE-NOTES.md">Engine notes</a>
