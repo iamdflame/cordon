@@ -19,7 +19,12 @@
     "build:graph": "tsx src/cli.ts",
     "audit": "tsx src/bench/run.ts",
     "demo:leak": "tsx src/bench/demo.ts",
-    "audit:github": "tsx src/bench/github.ts"
+    "audit:github": "tsx src/bench/github.ts",
+    "audit:channels": "tsx src/bench/channels.ts",
+    "audit:contested": "tsx src/bench/contested.ts",
+    "mcp": "tsx src/mcp/server.ts",
+    "bench:latency": "tsx src/bench/latency.ts",
+    "bench:engine": "tsx src/bench/engine-probe.ts"
   },
   "dependencies": {
     "@babel/parser": "^7.26.0",
