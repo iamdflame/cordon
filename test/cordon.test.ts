@@ -75,6 +75,7 @@ test('node ids are namespaced, stable and collision-free', () => {
 });
 
 test('cypher literals cannot be escaped', () => {
+  // cypher-lint-ignore: an injection payload we defend against, not a query we send
   const hostile = 'x" }) MATCH (n) DETACH DELETE n //';
   const rendered = cypherProps({ id: 1, text: hostile });
   const bare = rendered.split('').filter((ch, i) => ch === '"' && rendered[i - 1] !== '\\');

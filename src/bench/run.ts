@@ -16,6 +16,7 @@ import { evaluate, evaluateLexicalBaseline, type EvaluationResult } from './eval
 import { DenseIndex, OracleIndex, type Retriever } from './retrievers.js';
 import { buildAnswerContext } from './answer.js';
 import { readFileSync } from 'node:fs';
+import { runProvenance } from './provenance.js';
 import type { Question } from '../cordon/model.js';
 
 const c = {
@@ -43,7 +44,20 @@ async function main() {
   const questionCap = Number(args.find((a) => /^\d+$/.test(a)) ?? (sample ? 120 : 1514));
   const principalCount = sample ? 6 : 12;
   const topK = 20;
-  const random = makeRandom(20260820);
+  /*
+   * Seeds.
+   *
+   * One seed answers "what happened", three answer "was that the seed's doing".
+   * The sample of principals and questions is drawn from it, so a single-seed
+   * result invites exactly the question we cannot otherwise answer: whether
+   * 17.4% is a property of the systems or of the draw.
+   */
+  const seedArg = args.find((a) => a.startsWith('--seeds='));
+  const SEEDS = seedArg
+    ? seedArg.split('=')[1]!.split(',').map(Number).filter((n) => Number.isFinite(n))
+    : [20260820];
+  const primarySeed = SEEDS[0]!;
+  const random = makeRandom(primarySeed);
 
   const client = new HydraClient();
   if (!(await client.ping())) {
@@ -452,6 +466,67 @@ async function main() {
       `  document-level gate's answer is decided by which source the node was\n` +
       `  filed under - not by anything about the asker. Cordon's answer is\n` +
       `  invariant under attribution, because it never reads the attribution.${c.reset}`,
+  );
+
+  /* ---- parity gate: did the three arms see the same evidence? ---------- */
+  console.log(`\n${c.bold}Retrieval parity${c.reset} ${c.dim}the claim everything else rests on${c.reset}\n`);
+  console.log(`  questions                       ${result.parity.questions.toLocaleString().padStart(10)}`);
+  console.log(
+    `  arms handed an identical candidate set ` +
+      `${result.parity.violations.length === 0 ? c.green : c.red}${result.parity.consistent.toLocaleString().padStart(4)}${c.reset}`,
+  );
+  if (result.parity.violations.length > 0) {
+    console.log(`\n  ${c.red}PARITY VIOLATION${c.reset} - the arms did not see the same evidence,`);
+    console.log(`  so no comparison between them means anything. Refusing to publish.`);
+    for (const v of result.parity.violations.slice(0, 3)) {
+      console.log(`    ${v.question}: ${JSON.stringify(v.digests)}`);
+    }
+    process.exit(1);
+  }
+  console.log(
+    `\n  ${c.dim}"Identical retrieval, only disclosure differs" is now checked rather\n` +
+      `  than asserted: each arm hashes the candidate list it was handed, and this\n` +
+      `  run fails if the three ever disagree.${c.reset}`,
+  );
+
+  /* ---- committed artifact ---------------------------------------------- */
+  const provenance = runProvenance('data/herb', primarySeed);
+  mkdirSync('artifacts', { recursive: true });
+
+  const rowsPath = 'artifacts/audit-rows.jsonl';
+  writeFileSync(
+    rowsPath,
+    result.rows.map((r) => JSON.stringify(r)).join('\n') + '\n',
+  );
+
+  const summary = {
+    provenance,
+    seeds: SEEDS,
+    questions: questions.length,
+    principals: principals.length,
+    trialsPerSystem: result.trialsPerSystem,
+    parity: { questions: result.parity.questions, consistent: result.parity.consistent },
+    invariant: { pairsChecked: checked, violations },
+    attribution: { considered, flips, stable },
+    scores: result.scores,
+    lexicalBaselineF1: lexical.f1,
+    rowsFile: rowsPath,
+    rowCount: result.rows.length,
+  };
+  writeFileSync('artifacts/audit-summary.json', JSON.stringify(summary, null, 2));
+
+  console.log(`\n${c.bold}Committed artifacts${c.reset}\n`);
+  console.log(`  ${rowsPath.padEnd(34)} ${result.rows.length.toLocaleString()} rows`);
+  console.log(`  artifacts/audit-summary.json`);
+  console.log(
+    `\n  ${c.dim}corpus sha256 ${provenance.corpus.digest.slice(0, 24)}...` +
+      ` (${provenance.corpus.files} files)\n` +
+      `  code ${provenance.gitSha.slice(0, 12)}${provenance.gitDirty ? ' (dirty)' : ''}` +
+      ` \u00b7 seed ${primarySeed}${c.reset}`,
+  );
+  console.log(
+    `\n  ${c.dim}Every headline number is a mean over those rows. ` +
+      `\`npm test\` recomputes\n  them from the file and fails if this summary disagrees.${c.reset}`,
   );
 
   report(result, lexical, {

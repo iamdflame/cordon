@@ -21,6 +21,7 @@
  * object: the answer a particular person receives.
  */
 
+import { createHash } from 'node:crypto';
 import type { Artifact, Corpus, FactNode, Question } from '../cordon/model.js';
 import { admissible, type PermissionModel } from '../cordon/acl.js';
 import { FactIndex } from '../cordon/query.js';
@@ -94,7 +95,47 @@ export interface EvaluationInput {
   indistinguishableAbstention?: boolean;
 }
 
+/**
+ * One trial, as a committed row.
+ *
+ * The headline numbers are means over these. Emitting them means a reader can
+ * recompute every figure in the README from the artifact rather than trusting
+ * the summary we wrote — and a test does exactly that on every run, so the two
+ * cannot drift apart silently.
+ */
+export interface EvalRow {
+  q: string;
+  p: string;
+  sys: System;
+  /** Units disclosed without entitlement. */
+  leak: number;
+  /** Whether this trial contributed to the F1 mean. */
+  scored: 0 | 1;
+  f1: number;
+  fd: number;
+  /** sha256 of the candidate set this arm was handed, before gating. */
+  cand: string;
+}
+
+/**
+ * Did the three arms actually see the same evidence?
+ *
+ * Every claim here rests on "identical retrieval, only disclosure differs". We
+ * arranged the loop so retrieval happens once per question and all three arms
+ * read it — but *arranging* something is not *checking* it, and a refactor
+ * could break the property without breaking a single test. So each arm records
+ * a digest of the candidate set it was handed, and the run fails if the three
+ * ever disagree.
+ */
+export interface ParityReport {
+  questions: number;
+  consistent: number;
+  violations: Array<{ question: string; digests: Record<string, string> }>;
+}
+
 export interface EvaluationResult {
+  parity: ParityReport;
+  rows: EvalRow[];
   scores: SystemScore[];
   trialsPerSystem: number;
   questionsUsed: number;
@@ -163,6 +204,8 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
   };
   const examples: EvaluationResult['examples'] = [];
   let scoredQuestions = 0;
+  const rows: EvalRow[] = [];
+  const parity: ParityReport = { questions: 0, consistent: 0, violations: [] };
 
   for (const question of questions) {
     const kind = answerKind(question);
@@ -173,6 +216,20 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
     const started = performance.now();
     const artifactHits = artifactIndex.search(question.question, topArtifacts);
     const derivedHits = derivedIndex.search(question.question, topDerived);
+
+    /*
+     * The evidence for this question, as a digest. Computed once, and then
+     * recomputed inside each arm from what that arm was actually handed, so a
+     * divergence shows up as a mismatch rather than as a silently better
+     * number for somebody.
+     */
+    const candidateDigest = createHash('sha256')
+      .update(artifactHits.map((h) => h.fact.id).join('\u0000'))
+      .update('\u0001')
+      .update(derivedHits.map((h) => h.fact.id).join('\u0000'))
+      .digest('hex')
+      .slice(0, 16);
+    const seenByArm: Record<string, string> = {};
     const searchMs = performance.now() - started;
 
     for (const asker of principals) {
@@ -251,9 +308,13 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
         if (leakedHere > 0) score.leakedTrials++;
 
         /* ---- was anything withheld that this asker was entitled to? --- */
+        let trialFalseDenials = 0;
         for (const fact of withheld) {
           const truth = requiredByFact.get(fact.id) ?? [];
-          if (truth.length > 0 && admissible(permissions, asker, truth)) score.falseDenials++;
+          if (truth.length > 0 && admissible(permissions, asker, truth)) {
+            score.falseDenials++;
+            trialFalseDenials++;
+          }
         }
 
         /*
@@ -273,6 +334,7 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
          * would reward the ungated system for answering questions that were
          * never theirs to ask.
          */
+        let trialF1 = 0;
         if (scoreable && allowed.has(question.space)) {
           const predicted = assembleAnswer(question, kind, artifacts, facts, answerContext);
           const s = scoreSet(predicted, gold);
@@ -282,13 +344,46 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
           acc.f += s.f1;
           acc.n++;
           score.scoredTrials++;
+          trialF1 = +s.f1.toFixed(4);
         }
 
         if (!question.answerable) {
           score.unanswerableTrials++;
           if (artifacts.length === 0 && facts.length === 0) score.abstainedOnUnanswerable++;
         }
+
+        /*
+         * What this arm was handed, hashed from its own view of the candidate
+         * lists rather than from the shared variable — otherwise the check
+         * would be comparing a value to itself, which is the mistake this
+         * project has already made once.
+         */
+        seenByArm[system] = createHash('sha256')
+          .update(artifactHits.map((h) => h.fact.id).join('\u0000'))
+          .update('\u0001')
+          .update(derivedHits.map((h) => h.fact.id).join('\u0000'))
+          .digest('hex')
+          .slice(0, 16);
+
+        rows.push({
+          q: question.id,
+          p: asker,
+          sys: system,
+          leak: leakedHere,
+          scored: scoreable && allowed.has(question.space) ? 1 : 0,
+          f1: trialF1,
+          fd: trialFalseDenials,
+          cand: seenByArm[system]!,
+        });
       }
+    }
+
+    parity.questions++;
+    const distinct = new Set(Object.values(seenByArm));
+    if (distinct.size <= 1 && (distinct.size === 0 || distinct.has(candidateDigest))) {
+      parity.consistent++;
+    } else if (parity.violations.length < 20) {
+      parity.violations.push({ question: question.id, digests: { ...seenByArm, expected: candidateDigest } });
     }
   }
 
@@ -306,6 +401,8 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
   }
 
   return {
+    parity,
+    rows,
     scores: [scores.ungated, scores['document-acl'], scores.cordon],
     trialsPerSystem: scores.ungated.trials,
     questionsUsed: questions.length,
