@@ -126,11 +126,17 @@ docs/HYDRADB-ENGINE-NOTES.md:
   - Alternation inside a variable-length pattern (-[:A|B*1..n]->) is rejected,
     which is why RESTS_ON is one edge type rather than one per support kind.
   - A 1,024-row cap silently truncated a query for the membership relation,
-    returning 1,024 of 1,371 rows with an expiring continuation cursor and no
-    error — a quarter of the access-control table missing, failing open, looking
-    exactly like success. We filed it upstream with a minimal reproduction and
-    added a client-side guard that throws when a result arrives truncated with a
-    cursor attached.
+    returning 1,024 of 1,371 rows with no error — a quarter of the access-control
+    table missing, failing open, looking exactly like success. Passing the
+    continuation cursor back returns zero rows, and an explicit LIMIT above the
+    cap is silently reduced rather than honoured. We added a client-side guard
+    that throws on truncation-with-cursor.
+
+We filed three findings upstream with reproductions:
+
+  hydra-db/hydradb#115  results silently truncate at 1024 rows; cursor empty
+  hydra-db/hydradb#116  no batch write path for labelled nodes
+  hydra-db/hydradb#117  five OpenCypher subset constraints, one silent failure
 
 That last one is a correctness bug in an authorisation path, and finding it is
 the most useful thing this project can hand back to the HydraDB team.
@@ -142,16 +148,19 @@ the most useful thing this project can hand back to the HydraDB team.
 https://github.com/iamdflame/cordon
 ```
 
+## Live demo
+
+```
+https://cordon-graph.vercel.app
+```
+
+Console (13 real GitHub team principals, three gates, derivation chains):
+`https://cordon-graph.vercel.app/console`
+
 ## Demo video
 
 ```
 <paste the URL once uploaded — verify it plays logged-out before submitting>
-```
-
-## Deployed link
-
-```
-<console URL if hosted, otherwise: run locally with `npm run hydra:up && npm run api && cd web && npm run dev` — README has the three commands>
 ```
 
 ---

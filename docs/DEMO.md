@@ -44,100 +44,86 @@ the time you hit record.
 
 ## 1. The script
 
-Total: 2 minutes 55 seconds of speech. Timings are where each line *starts*.
+Total: about 2 minutes 50 of speech. Timings are where each block *starts*.
 
-Copy each block into ElevenLabs **separately** — one generation per block. That
-way if block 4 comes out wrong you regenerate block 4, not the whole thing.
+**The demo must start by 0:40.** Everything before it is setup, and setup is not
+what wins. The aggregation attack is the peak, not the preamble.
 
-Numbers are spelled out on purpose. Text-to-speech reads "17.4%" as
-"seventeen point four percent" only if it feels like it; spelled out, it always
-does.
+Copy each block into ElevenLabs **separately** — one generation per block, so a
+bad take costs you one block and not three minutes.
 
-### Block 1 — 0:00 to 0:22 · the hole
+Numbers are spelled out on purpose. Text-to-speech reads "17.4%" as "seventeen
+point four percent" only if it feels like it; spelled out, it always does.
 
-> Every enterprise AI assistant filters what it retrieves by document
-> permissions. Which is correct... right up until it infers something.
+### Block 1 — 0:00 to 0:20 · the problem, concretely
+
+> A fact inferred from three documents is not a document. It has no access
+> control list of its own.
 >
-> A fact derived from three documents is not a document. It has no access
-> control list of its own. So a knowledge graph built over a company's data
-> quietly launders restricted material into an unrestricted form — and no
-> file-access audit will ever show it, because what leaked was never a file.
+> Every enterprise AI assistant filters by document permissions... so when the
+> assistant *infers* something, nothing is checking whether you were allowed to
+> learn it.
 
-### Block 2 — 0:22 to 1:05 · the leak, live
+### Block 2 — 0:20 to 0:40 · the stake
 
-> Same question. Two colleagues, both VPs of Engineering.
+> We measured this on fifteen hundred enterprise questions across twelve
+> principals. Eighteen thousand trials.
 >
-> The answer is a derived fact: Bob Brown works across four product areas. No
-> single document says that. It was assembled from four.
->
-> David can read all four spaces, so he gets the answer. Correctly.
->
-> Bob can read two of them. Document-level filtering checks the one space the
-> fact is filed under, sees that Bob has it, and hands the fact over. That is
-> the leak.
->
-> Cordon walks the derivation, finds the two spaces underneath that Bob does not
-> hold, and withholds — and tells him exactly which two he is missing.
+> Document-level filtering — which is what ships today — leaked facts on
+> seventeen point four percent of them. That is ten thousand six hundred and
+> seventeen facts handed to people not entitled to them.
 
-### Block 3 — 1:05 to 1:35 · the numbers
+### Block 3 — 0:40 to 1:40 · the demo. **This is the video.**
 
-> Fifteen hundred questions from Salesforce's enterprise benchmark. Twelve
-> different principals. Eighteen thousand trials per system. Same retrieval,
-> same answer assembly — the only difference is what each one is willing to
-> disclose.
->
-> Document-level filtering leaks on seventeen point four percent of trials.
-> Cordon: zero. At identical answer quality, and zero false denials.
->
-> And this row is the whole argument. At depth zero — facts read straight out of
-> one document — document filtering is perfectly correct. It fails only on
-> derived facts. That is not a bug in someone's implementation. That is the
-> ceiling of the idea.
+Run `npm run attack` on screen and let it print. Do not talk over the output;
+let it land, then narrate.
 
-### Block 4 — 1:35 to 2:05 · the baseline is arbitrary
+> Here is the attack document-level filtering cannot defend against even in
+> principle.
+>
+> Two facts this person *is* entitled to. Together, they determine a third one
+> they are *not*. Nothing that was handed over was itself forbidden — and the
+> conclusion is reconstructed anyway.
+>
+> Document-level filtering discloses it. Cordon refuses... and prints the
+> derivation that failed: the exact source, in the exact repository, that this
+> person has no path to.
+>
+> Cordon never reads the attribution. It reads the derivation.
 
-> There is a worse problem underneath. A derived fact carries one space,
-> assigned when the node was written — whichever source the writer reached
-> first. That assignment is what a document-level gate reads.
->
-> So we asked: for every fact that must be withheld from someone, would the gate
-> have answered differently if the node had been filed under a different one of
-> its own sources?
->
-> It flips. Same graph, same permissions, same person asking — opposite answer.
-> A security decision settled by ingest order is not a security decision.
-> Cordon's answer never changes, because Cordon never reads the attribution. It
-> reads the derivation.
+### Block 4 — 1:40 to 2:05 · the number that matters
 
-### Block 5 — 2:05 to 2:35 · real permissions
+> Zero leaks. Across eighteen thousand trials.
+>
+> And here is the part we did not expect. Identical answer quality to the
+> baseline — zero point zero nine nine on both. Eliminating every leak cost us
+> nothing. No false denials, no lost answers.
+>
+> Security here is not a trade against utility. It is free.
 
-> None of that depends on us modelling the access control, because for the
-> second run we did not.
->
-> Three real GitHub repositories. Two private, one public. Same connector
-> interface, and then the exact same extraction, resolution, derivation and
-> admissibility code — byte for byte.
->
-> A fact about a person who appears in the public handbook and in both private
-> repositories gets disclosed by document-level filtering. Here is the source it
-> rests on, requested without credentials.
->
-> Four oh four. GitHub refuses to show the document. The fact derived from it
-> was handed over anyway.
+### Block 5 — 2:05 to 2:35 · HydraDB, and the credibility beat
 
-### Block 6 — 2:35 to 2:55 · why a graph, and the bug
-
-> Admissibility is a reachability question with a per-principal predicate. With
-> n principals there are two-to-the-n visibility subsets, so it cannot be
-> precomputed. It has to be traversed, per asker, at query time. And a vector
-> index cannot express it even in principle: an embedding records what a fact
-> resembles, not what it was derived from. Similarity is not provenance.
+> This runs on the HydraDB open-source engine, over the HTTP query API.
+> Admissibility is a variable-length traversal that cannot be precomputed — with
+> n principals there are two-to-the-n visibility subsets — so it is walked, per
+> asker, at query time.
 >
-> One last thing. Our own first invariant check compared a value against itself.
-> It could not have failed. Once it compared the graph against a requirement
-> recomputed independently, forty-seven facts disagreed. A security property
-> only ever checked against the field that produced it is not being checked at
-> all.
+> Building it, we probed what the OpenCypher subset actually supports, and found
+> queries silently truncating at one thousand and twenty-four rows with no
+> error. For a security system that means a quarter of an authorisation table
+> disappearing quietly. Our client fails closed on it. We filed it upstream.
+> That capability map is in the repository.
+
+### Block 6 — 2:35 to 3:00 · the close
+
+> Document filtering does not have a bug. It has a ceiling... and the ceiling is
+> the first inference.
+>
+> Which means moving an enterprise onto a knowledge graph creates an
+> access-control problem that did not exist before. The graph gets unsafe
+> exactly when it gets useful.
+>
+> That is what Cordon fixes. One command reproduces every number.
 
 ---
 
@@ -294,12 +280,12 @@ OBS saves to `~/Videos` by default. Rename each file as soon as you record it.
 Window A, the console, sitting still. Slowly scroll down the page once and back
 up. That is all. This is wallpaper under Block 1.
 
-**Shot 2 — `shot2-leak.mp4`** (needs ~50 seconds)
+**Shot 2 — `shot2-attack.mp4`** (needs ~65 seconds — this is the one that matters)
 
 Window B, the terminal, cleared (`clear`). Type:
 
 ```bash
-npm run demo:leak
+npm run attack
 ```
 
 Press Enter. Let it print completely. Do not scroll while it prints. When it
