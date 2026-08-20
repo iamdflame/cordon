@@ -28,7 +28,19 @@ import {
 
 const SNAPSHOT = 'fixtures/github/snapshot.json';
 const OWNER = process.env.CORDON_GH_OWNER ?? 'iamdflame';
-const REPOS = (process.env.CORDON_GH_REPOS ?? 'cordon-demo-atlas,cordon-demo-borealis,cordon-demo-handbook')
+const REPOS = (
+  process.env.CORDON_GH_REPOS ??
+  [
+    'cordon-demo-atlas',
+    'cordon-demo-borealis',
+    'cordon-demo-cygnus',
+    'cordon-demo-draco',
+    'cordon-demo-fornax',
+    'cordon-demo-handbook',
+    'cordon-demo-eridanus',
+    'cordon-demo-gemini',
+  ].join(',')
+)
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -284,11 +296,134 @@ async function main() {
 
   const leaks = leaksByGate.get('any-source')!;
 
+  /* ---------------------------------------------------------------------- *
+   * Depth and audience, column-matched with the HERB table.
+   * ---------------------------------------------------------------------- */
+  bar('leaks by derivation depth');
+  const factsAtLevel = new Map<number, number>();
+  for (const fact of built.facts) factsAtLevel.set(fact.level, (factsAtLevel.get(fact.level) ?? 0) + 1);
+
+  const leakDepth = new Map<string, Map<number, number>>();
+  for (const gate of ['filed-under', 'any-source', 'cordon'] as const) {
+    const perLevel = new Map<number, number>();
+    for (const leak of leaksByGate.get(gate)!) {
+      perLevel.set(leak.level, (perLevel.get(leak.level) ?? 0) + 1);
+    }
+    leakDepth.set(gate, perLevel);
+  }
+
+  const levels = [...factsAtLevel.keys()].sort((a, b) => a - b);
+  console.log(
+    `  ${'depth'.padEnd(7)} ${'facts'.padStart(7)} ${'filed-under'.padStart(12)} ${'any-source'.padStart(11)} ${'cordon'.padStart(8)}`,
+  );
+  const depthTable: Array<{ level: number; facts: number; f: number; a: number; c: number }> = [];
+  for (const level of levels) {
+    const row = {
+      level,
+      facts: factsAtLevel.get(level) ?? 0,
+      f: leakDepth.get('filed-under')!.get(level) ?? 0,
+      a: leakDepth.get('any-source')!.get(level) ?? 0,
+      c: leakDepth.get('cordon')!.get(level) ?? 0,
+    };
+    depthTable.push(row);
+    console.log(
+      `  ${String(level).padEnd(7)} ${String(row.facts).padStart(7)} ${String(row.f).padStart(12)} ` +
+        `${String(row.a).padStart(11)} ${String(row.c).padStart(8)}`,
+    );
+  }
+
+  bar('audience collapse');
+  const audience: Array<{ level: number; facts: number; meanSpaces: number; meanAudience: number; nobody: number }> = [];
+  for (const level of levels) {
+    const at = built.facts.filter((f) => f.level === level);
+    let spaceSum = 0;
+    let audienceSum = 0;
+    let nobody = 0;
+    for (const fact of at) {
+      const required = requiredByFact.get(fact.id) ?? fact.requiredSpaces;
+      spaceSum += required.length;
+      let count = 0;
+      for (const principal of uniquePrincipals) {
+        if (admissible(built.permissions, principal, required)) count++;
+      }
+      audienceSum += count;
+      if (count === 0) nobody++;
+    }
+    audience.push({
+      level,
+      facts: at.length,
+      meanSpaces: at.length > 0 ? spaceSum / at.length : 0,
+      meanAudience: at.length > 0 ? audienceSum / at.length : 0,
+      nobody: at.length > 0 ? nobody / at.length : 0,
+    });
+  }
+  console.log(
+    `  ${'depth'.padEnd(7)} ${'facts'.padStart(7)} ${'mean spaces'.padStart(12)} ${'mean audience'.padStart(14)} ${'nobody'.padStart(8)}`,
+  );
+  for (const row of audience) {
+    console.log(
+      `  ${String(row.level).padEnd(7)} ${String(row.facts).padStart(7)} ${row.meanSpaces.toFixed(2).padStart(12)} ` +
+        `${row.meanAudience.toFixed(1).padStart(14)} ${(row.nobody * 100).toFixed(0).padStart(7)}%`,
+    );
+  }
+
+
   /* --------------------------------------------------- the 404 is the proof */
+  /* ---------------------------------------------------------------------- *
+   * GitHub's server as the test oracle.
+   *
+   * For every pair Cordon withholds, assert that the underlying source really
+   * is unreachable to that principal. For `public` that is an unauthenticated
+   * request, and a 404 is GitHub telling us our withholding was correct. An
+   * assertion that fails here means we withheld something that was never
+   * restricted - a false denial against a real system.
+   * ---------------------------------------------------------------------- */
+  bar('404 assertions');
+  const checked = new Map<string, number>();
+
+  const withheldPublic = new Set<string>();
+  for (const fact of built.facts) {
+    const required = requiredByFact.get(fact.id) ?? fact.requiredSpaces;
+    if (admissible(built.permissions, PUBLIC_PRINCIPAL, required)) continue;
+    const permitted = built.permissions.readable.get(PUBLIC_PRINCIPAL) ?? new Set<string>();
+    for (const space of required) {
+      if (permitted.has(space)) continue;
+      const locator = rootSource(fact.id, space);
+      if (locator) withheldPublic.add(locator);
+    }
+  }
+
+  let asserted = 0;
+  let passed = 0;
+  let failed: string[] = [];
+  for (const locator of withheldPublic) {
+    const status = checked.get(locator) ?? (await anonymousStatus(locator));
+    checked.set(locator, status);
+    asserted++;
+    if (status === 404) passed++;
+    else failed.push(`${locator} -> ${status}`);
+  }
+
+  console.log(
+    `  distinct restricted sources under withheld facts   ${String(asserted).padStart(6)}`,
+  );
+  console.log(
+    `  anonymous GET returned 404                         ` +
+      `${passed === asserted ? '\x1b[32m' : '\x1b[31m'}${String(passed).padStart(6)}\x1b[0m`,
+  );
+  if (failed.length > 0) {
+    console.log(`  \x1b[31mFAILED\x1b[0m`);
+    for (const f of failed.slice(0, 5)) console.log(`    ${f}`);
+  } else if (asserted > 0) {
+    console.log(
+      `\n  \x1b[32m${passed}/${asserted} pass.\x1b[0m \x1b[2mEvery source Cordon withheld from the anonymous\n` +
+        `  principal is genuinely unreachable to it. The test oracle is GitHub.\x1b[0m`,
+    );
+  }
+
   bar('ground truth: what GitHub itself says');
 
   const publicLeaks = leaks.filter((l) => l.principal === PUBLIC_PRINCIPAL && l.locator);
-  const checked = new Map<string, number>();
 
   if (publicLeaks.length === 0) {
     console.log('  no leak reachable by the anonymous principal in this snapshot');

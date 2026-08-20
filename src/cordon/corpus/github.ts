@@ -54,7 +54,14 @@ export interface GitHubSnapshot {
     comments: Array<{ author: string; body: string; createdAt: string }>;
   }>;
   /** Org teams, when the owner is an organisation. Empty for a user account. */
-  teams: Array<{ slug: string; name: string; parent: string | null; members: string[] }>;
+  teams: Array<{
+    slug: string;
+    name: string;
+    parent: string | null;
+    members: string[];
+    /** Repository names this team is granted directly. */
+    repos: string[];
+  }>;
 }
 
 function gh(args: string[]): unknown {
@@ -163,7 +170,18 @@ export function fetchSnapshot(owner: string, repoNames: string[]): GitHubSnapsho
       } catch {
         members = [];
       }
-      return { slug: t.slug, name: t.name, parent: t.parent?.slug ?? null, members };
+      let repos: string[] = [];
+      try {
+        const r = gh([
+          'api',
+          `orgs/${owner}/teams/${t.slug}/repos`,
+          '--paginate',
+        ]) as Array<{ name: string }>;
+        repos = r.map((x) => x.name);
+      } catch {
+        repos = [];
+      }
+      return { slug: t.slug, name: t.name, parent: t.parent?.slug ?? null, members, repos };
     });
   } catch {
     teams = [];
@@ -254,15 +272,77 @@ export function corpusFromSnapshot(
     employees.set(id, { id, name, role: 'mentioned', location: '', org: snapshot.owner });
   }
 
+  /*
+   * Teams are principals.
+   *
+   * That is not a modelling convenience - it is how GitHub itself thinks about
+   * access. A team holds a permission set, and **child teams inherit their
+   * parent's repository access** (the inheritance runs from parent down to
+   * child; a parent does not gain its children's grants). So a member of
+   * `billing` can read strictly more than a member of `engineering`, and the
+   * two receive genuinely different derived facts.
+   *
+   * This is computed into each space's audience rather than expressed through
+   * Cordon's MANAGES edge, because MANAGES runs the other way - it gives a
+   * manager their subordinates' spaces. Using it here would grant parents their
+   * children's access, which GitHub does not do, and would fail *open*.
+   */
+  const childrenOf = new Map<string, string[]>();
+  for (const team of snapshot.teams) {
+    if (!team.parent) continue;
+    const list = childrenOf.get(team.parent);
+    if (list) list.push(team.slug);
+    else childrenOf.set(team.parent, [team.slug]);
+  }
+
+  /** A team and everything below it, which is exactly who inherits its grants. */
+  const withDescendants = (slug: string): string[] => {
+    const out: string[] = [];
+    const stack = [slug];
+    const seen = new Set<string>();
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (seen.has(current)) continue;
+      seen.add(current);
+      out.push(current);
+      for (const child of childrenOf.get(current) ?? []) stack.push(child);
+    }
+    return out;
+  };
+
+  const teamPrincipal = (slug: string) => `team:${slug}`;
+  for (const team of snapshot.teams) {
+    const id = teamPrincipal(team.slug);
+    accounts.add(id);
+    employees.set(id, {
+      id,
+      name: `@${snapshot.owner}/${team.slug}`,
+      role: team.parent ? `team, child of ${team.parent}` : 'team',
+      location: '',
+      org: snapshot.owner,
+    });
+  }
+
+  /** repo name -> team principals entitled to it, inheritance included. */
+  const teamsByRepo = new Map<string, Set<string>>();
+  for (const team of snapshot.teams) {
+    for (const repo of team.repos) {
+      const holders = teamsByRepo.get(repo) ?? new Set<string>();
+      for (const slug of withDescendants(team.slug)) holders.add(teamPrincipal(slug));
+      teamsByRepo.set(repo, holders);
+    }
+  }
+
   /* ---- spaces: repositories, with their real audience ------------------- */
   for (const repo of snapshot.repos) {
     /*
      * A public repository is readable by everyone, so its audience includes the
      * anonymous principal. A private one is readable by its collaborators and
-     * nobody else - which GitHub enforces with a 404, not with our opinion.
+     * by the teams granted it - which GitHub enforces with a 404, not with our
+     * opinion.
      */
     const team = repo.private
-      ? [...repo.collaborators]
+      ? [...new Set([...repo.collaborators, ...(teamsByRepo.get(repo.name) ?? [])])]
       : [...accounts];
 
     spaces.set(repo.name, { id: repo.name, name: repo.name, team, customers: [] });
@@ -288,20 +368,16 @@ export function corpusFromSnapshot(
     });
   }
 
-  /* ---- team hierarchy, when the owner is an organisation ---------------- */
-  for (const team of snapshot.teams) {
-    if (!team.parent) continue;
-    const parentMembers = snapshot.teams.find((t) => t.slug === team.parent)?.members ?? [];
-    for (const child of team.members) {
-      for (const parent of parentMembers) {
-        if (parent === child) continue;
-        const list = reports.get(parent);
-        if (list) list.push(child);
-        else reports.set(parent, [child]);
-        managerOf.set(child, parent);
-      }
-    }
-  }
+  /*
+   * Deliberately no MANAGES edges here.
+   *
+   * Cordon's MANAGES grants a manager their subordinates' spaces, which is the
+   * right rule for a corporate hierarchy and the wrong one for GitHub teams:
+   * inheritance there runs parent -> child, not child -> parent. Team nesting
+   * is already reflected in each space's audience above. Adding MANAGES on top
+   * would grant parents their children's access, which GitHub does not, and it
+   * would fail open - so the hierarchy is recorded and left unused.
+   */
 
   const questions: Question[] = (options.questions ?? []).map((q, i) => ({
     id: `gh-q-${i}`,
@@ -326,6 +402,7 @@ export function snapshotStats(snapshot: GitHubSnapshot) {
     issues: snapshot.issues.length,
     comments: snapshot.issues.reduce((n, i) => n + i.comments.length, 0),
     teams: snapshot.teams.length,
+    teamGrants: snapshot.teams.reduce((n, t) => n + t.repos.length, 0),
     fetchedAt: snapshot.fetchedAt,
   };
 }

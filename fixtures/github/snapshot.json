@@ -1,6 +1,6 @@
 {
   "owner": "iamdflame",
-  "fetchedAt": "2026-08-19T09:50:05.863Z",
+  "fetchedAt": "2026-08-19T23:54:34.850Z",
   "repos": [
     {
       "name": "cordon-demo-atlas",
@@ -21,6 +21,33 @@
       ]
     },
     {
+      "name": "cordon-demo-cygnus",
+      "fullName": "iamdflame/cordon-demo-cygnus",
+      "private": true,
+      "description": "Security incident response (Cordon fixture)",
+      "collaborators": [
+        "iamdflame"
+      ]
+    },
+    {
+      "name": "cordon-demo-draco",
+      "fullName": "iamdflame/cordon-demo-draco",
+      "private": true,
+      "description": "Pricing model rework (Cordon fixture)",
+      "collaborators": [
+        "iamdflame"
+      ]
+    },
+    {
+      "name": "cordon-demo-fornax",
+      "fullName": "iamdflame/cordon-demo-fornax",
+      "private": true,
+      "description": "Headcount and org planning (Cordon fixture)",
+      "collaborators": [
+        "iamdflame"
+      ]
+    },
+    {
       "name": "cordon-demo-handbook",
       "fullName": "iamdflame/cordon-demo-handbook",
       "private": false,
@@ -28,9 +55,37 @@
       "collaborators": [
         "iamdflame"
       ]
+    },
+    {
+      "name": "cordon-demo-eridanus",
+      "fullName": "iamdflame/cordon-demo-eridanus",
+      "private": false,
+      "description": "Open-source client SDK (Cordon fixture)",
+      "collaborators": [
+        "iamdflame"
+      ]
+    },
+    {
+      "name": "cordon-demo-gemini",
+      "fullName": "iamdflame/cordon-demo-gemini",
+      "private": false,
+      "description": "Public product roadmap (Cordon fixture)",
+      "collaborators": [
+        "iamdflame"
+      ]
     }
   ],
   "issues": [
+    {
+      "repo": "cordon-demo-atlas",
+      "number": 5,
+      "title": "Capacity review before cutover",
+      "body": "Tomas Nowak reviewed capacity headroom for the cutover weekend. Marcus Vale signed off on the runbook.\nThe billing migration is on track.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:38Z",
+      "url": "https://github.com/iamdflame/cordon-demo-atlas/issues/5",
+      "comments": []
+    },
     {
       "repo": "cordon-demo-atlas",
       "number": 4,
@@ -73,6 +128,16 @@
     },
     {
       "repo": "cordon-demo-borealis",
+      "number": 5,
+      "title": "SDK compatibility during integration",
+      "body": "Ingrid Holm reviewed the client SDK surface for compatibility with Northwind's stack.\nElena Fischer asked for a written assessment before close.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:44Z",
+      "url": "https://github.com/iamdflame/cordon-demo-borealis/issues/5",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-borealis",
       "number": 4,
       "title": "Integration sequencing",
       "body": "Priya Raman proposed sequencing integration after the ledger freeze lifts. Elena Fischer agreed.",
@@ -109,6 +174,146 @@
       "author": "iamdflame",
       "createdAt": "2026-08-19T09:42:46Z",
       "url": "https://github.com/iamdflame/cordon-demo-borealis/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-cygnus",
+      "number": 4,
+      "title": "Post-incident review scheduling",
+      "body": "Sofia Almeida scheduled the review. Priya Raman and Marcus Vale to attend.\nRafael Costa will take the write-up.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:55Z",
+      "url": "https://github.com/iamdflame/cordon-demo-cygnus/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-cygnus",
+      "number": 3,
+      "title": "Customer notification decision",
+      "body": "Rafael Costa drafted the notification. Sofia Almeida is the approver.\nThe customer notification is on hold pending legal review.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:52Z",
+      "url": "https://github.com/iamdflame/cordon-demo-cygnus/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-cygnus",
+      "number": 2,
+      "title": "Credential rotation scope",
+      "body": "Marcus Vale rotated the affected service credentials. Sofia Almeida confirmed coverage.\nPriya Raman was consulted about the billing service blast radius.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:50Z",
+      "url": "https://github.com/iamdflame/cordon-demo-cygnus/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-cygnus",
+      "number": 1,
+      "title": "Incident 2026-07 initial triage",
+      "body": "Sofia Almeida is incident commander. Marcus Vale is on the infrastructure side.\nScope is still being established. This repository is restricted.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:47Z",
+      "url": "https://github.com/iamdflame/cordon-demo-cygnus/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-draco",
+      "number": 4,
+      "title": "Draft approved for internal review",
+      "body": "Sofia Almeida approved the draft for internal review. The pricing rework is approved.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:06Z",
+      "url": "https://github.com/iamdflame/cordon-demo-draco/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-draco",
+      "number": 3,
+      "title": "Competitive positioning notes",
+      "body": "Sofia Almeida summarised the positioning work. Tomas Nowak added sensitivity ranges.\nDo not circulate outside this repository.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:04Z",
+      "url": "https://github.com/iamdflame/cordon-demo-draco/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-draco",
+      "number": 2,
+      "title": "Cost inputs from infrastructure",
+      "body": "Marcus Vale supplied unit costs. Tomas Nowak found a discrepancy against last quarter.\nThe pricing rework is blocked on finance sign-off.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:00Z",
+      "url": "https://github.com/iamdflame/cordon-demo-draco/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-draco",
+      "number": 1,
+      "title": "Pricing model rework: opening assumptions",
+      "body": "Sofia Almeida is leading the rework. Tomas Nowak owns the modelling.\nMarcus Vale is reviewing the infrastructure cost inputs.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:52:58Z",
+      "url": "https://github.com/iamdflame/cordon-demo-draco/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-fornax",
+      "number": 4,
+      "title": "Backfill priorities",
+      "body": "Elena Fischer set backfill priorities. Priya Raman and Tomas Nowak reviewed.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:18Z",
+      "url": "https://github.com/iamdflame/cordon-demo-fornax/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-fornax",
+      "number": 3,
+      "title": "Compensation band review",
+      "body": "Rafael Costa completed the band review. Elena Fischer approved.\nDo not share outside this repository under any circumstances.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:14Z",
+      "url": "https://github.com/iamdflame/cordon-demo-fornax/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-fornax",
+      "number": 2,
+      "title": "Engineering requirements",
+      "body": "Priya Raman submitted requirements covering the billing and integration work.\nTomas Nowak flagged a dependency on the pricing outcome.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:12Z",
+      "url": "https://github.com/iamdflame/cordon-demo-fornax/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-fornax",
+      "number": 1,
+      "title": "Headcount plan for the next two quarters",
+      "body": "Elena Fischer owns the plan. Priya Raman supplied engineering requirements.\nRafael Costa is handling the compensation bands. Restricted.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:09Z",
+      "url": "https://github.com/iamdflame/cordon-demo-fornax/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 7,
+      "title": "Handbook: incident command rotation",
+      "body": "Sofia Almeida maintains the incident command rotation page. Ingrid Holm reviews it quarterly. Process only.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:28Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/7",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 6,
+      "title": "Handbook: migration freeze windows - owner",
+      "body": "Priya Raman owns this page and reviews changes to it. General guidance only; no project specifics here.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:23Z",
+      "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/6",
       "comments": []
     },
     {
@@ -159,6 +364,66 @@
       "author": "iamdflame",
       "createdAt": "2026-08-19T09:42:54Z",
       "url": "https://github.com/iamdflame/cordon-demo-handbook/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-eridanus",
+      "number": 3,
+      "title": "SDK v2 API surface",
+      "body": "Ingrid Holm proposed the v2 surface. Community feedback welcome.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:36Z",
+      "url": "https://github.com/iamdflame/cordon-demo-eridanus/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-eridanus",
+      "number": 2,
+      "title": "Open issue triage rotation",
+      "body": "Ingrid Holm and Sofia Almeida share triage. Nothing confidential is discussed here.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:34Z",
+      "url": "https://github.com/iamdflame/cordon-demo-eridanus/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-eridanus",
+      "number": 1,
+      "title": "Client SDK: release process",
+      "body": "Ingrid Holm maintains the SDK release process. Sofia Almeida reviews breaking changes.\nThis repository is public.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:31Z",
+      "url": "https://github.com/iamdflame/cordon-demo-eridanus/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-gemini",
+      "number": 3,
+      "title": "Community questions",
+      "body": "Rafael Costa answers community questions here. Ingrid Holm moderates.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:44Z",
+      "url": "https://github.com/iamdflame/cordon-demo-gemini/issues/3",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-gemini",
+      "number": 2,
+      "title": "Roadmap: how we prioritise",
+      "body": "Sofia Almeida explains the prioritisation process. Ingrid Holm maintains this page.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:41Z",
+      "url": "https://github.com/iamdflame/cordon-demo-gemini/issues/2",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-gemini",
+      "number": 1,
+      "title": "Public roadmap: this quarter",
+      "body": "Ingrid Holm publishes the roadmap. Rafael Costa handles external communications.\nDeliberately free of internal detail.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-19T23:53:39Z",
+      "url": "https://github.com/iamdflame/cordon-demo-gemini/issues/1",
       "comments": []
     }
   ],
