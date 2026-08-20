@@ -215,3 +215,34 @@ issue handbook "Process: the incident review" \
 "By default the incident review is complete once the write-up is filed."
 issue cygnus "Review status" \
 "The incident review is delayed. Rafael Costa has not filed the write-up."
+
+# ------------------------------------------------- cross-repository references
+#
+# Real issues reference other repositories constantly - "see org/other-repo#12",
+# "blocked on the work in X". Those references are what break **claim locality**
+# (docs/ATTACK.md, Theorem 2): a document in one repository asserting something
+# about a person's work in another lets a reader holding only the first learn
+# about the second.
+#
+# Without these the fixture is as tidy as HERB, claim locality holds trivially,
+# and the aggregation census reports a zero that is an artifact of clean data
+# rather than a property of the rule. Seeding them is how Cordon's exposure gets
+# measured instead of assumed away.
+
+echo "cross-repository references (seeded: these break claim locality on purpose)"
+
+issue handbook "Index: who is working where" \
+"Directory page, public. Priya Raman is currently on cordon-demo-atlas and cordon-demo-borealis.
+Marcus Vale is on cordon-demo-atlas. Sofia Almeida is on cordon-demo-cygnus."
+
+issue eridanus "SDK dependencies on internal work" \
+"Ingrid Holm notes the SDK release depends on cordon-demo-borealis integration work.
+Sofia Almeida is tracking this from cordon-demo-cygnus."
+
+issue gemini "Roadmap dependencies" \
+"Rafael Costa notes the public roadmap depends on cordon-demo-fornax headcount decisions.
+Tomas Nowak is covering the cordon-demo-draco pricing input."
+
+issue borealis "Cross-project note" \
+"Priya Raman is splitting time with cordon-demo-cygnus this month. Elena Fischer is picking up
+the cordon-demo-fornax planning thread in her absence."

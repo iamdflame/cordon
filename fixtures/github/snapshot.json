@@ -1,6 +1,6 @@
 {
   "owner": "cordon-demo",
-  "fetchedAt": "2026-08-20T00:20:53.603Z",
+  "fetchedAt": "2026-08-20T01:41:17.505Z",
   "repos": [
     {
       "name": "cordon-demo-atlas",
@@ -134,6 +134,16 @@
       "author": "iamdflame",
       "createdAt": "2026-08-19T09:42:39Z",
       "url": "https://github.com/cordon-demo/cordon-demo-atlas/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-borealis",
+      "number": 7,
+      "title": "Cross-project note",
+      "body": "Priya Raman is splitting time with cordon-demo-cygnus this month. Elena Fischer is picking up\nthe cordon-demo-fornax planning thread in her absence.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-20T01:40:20Z",
+      "url": "https://github.com/cordon-demo/cordon-demo-borealis/issues/7",
       "comments": []
     },
     {
@@ -318,6 +328,16 @@
     },
     {
       "repo": "cordon-demo-fornax",
+      "number": 6,
+      "title": "Decision: the headcount plan",
+      "body": "The headcount plan is approved. Elena Fischer signed off.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-20T01:40:07Z",
+      "url": "https://github.com/cordon-demo/cordon-demo-fornax/issues/6",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-fornax",
       "number": 5,
       "title": "Decision: the headcount plan",
       "body": "The headcount plan is approved. Elena Fischer signed off.",
@@ -364,6 +384,16 @@
       "author": "iamdflame",
       "createdAt": "2026-08-19T23:53:09Z",
       "url": "https://github.com/cordon-demo/cordon-demo-fornax/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-handbook",
+      "number": 9,
+      "title": "Index: who is working where",
+      "body": "Directory page, public. Priya Raman is currently on cordon-demo-atlas and cordon-demo-borealis.\nMarcus Vale is on cordon-demo-atlas. Sofia Almeida is on cordon-demo-cygnus.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-20T01:40:13Z",
+      "url": "https://github.com/cordon-demo/cordon-demo-handbook/issues/9",
       "comments": []
     },
     {
@@ -448,6 +478,16 @@
     },
     {
       "repo": "cordon-demo-eridanus",
+      "number": 4,
+      "title": "SDK dependencies on internal work",
+      "body": "Ingrid Holm notes the SDK release depends on cordon-demo-borealis integration work.\nSofia Almeida is tracking this from cordon-demo-cygnus.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-20T01:40:15Z",
+      "url": "https://github.com/cordon-demo/cordon-demo-eridanus/issues/4",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-eridanus",
       "number": 3,
       "title": "SDK v2 API surface",
       "body": "Ingrid Holm proposed the v2 surface. Community feedback welcome.",
@@ -474,6 +514,16 @@
       "author": "iamdflame",
       "createdAt": "2026-08-19T23:53:31Z",
       "url": "https://github.com/cordon-demo/cordon-demo-eridanus/issues/1",
+      "comments": []
+    },
+    {
+      "repo": "cordon-demo-gemini",
+      "number": 5,
+      "title": "Roadmap dependencies",
+      "body": "Rafael Costa notes the public roadmap depends on cordon-demo-fornax headcount decisions.\nTomas Nowak is covering the cordon-demo-draco pricing input.",
+      "author": "iamdflame",
+      "createdAt": "2026-08-20T01:40:18Z",
+      "url": "https://github.com/cordon-demo/cordon-demo-gemini/issues/5",
       "comments": []
     },
     {

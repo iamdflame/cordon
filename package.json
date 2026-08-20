@@ -21,6 +21,7 @@
     "demo:leak": "tsx src/bench/demo.ts",
     "audit:github": "tsx src/bench/github.ts",
     "audit:channels": "tsx src/bench/channels.ts",
+    "attack": "tsx src/attack/run.ts",
     "audit:contested": "tsx src/bench/contested.ts",
     "audit:contested:github": "tsx src/bench/contested.ts --github",
     "mcp": "tsx src/mcp/server.ts",

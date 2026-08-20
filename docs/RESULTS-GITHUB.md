@@ -22,7 +22,7 @@ is an HTTP status code.
 | `cordon-demo/cordon-demo-eridanus` | public | 1 |
 | `cordon-demo/cordon-demo-gemini` | public | 1 |
 
-44 issues, 0 comments.
+49 issues, 0 comments.
 
 **Principals** are real accounts plus `public`, the unauthenticated internet.
 A public repository is readable by `public` because it genuinely is. A private
@@ -39,8 +39,8 @@ Only the first stage differs from the HERB run: a connector that returns the
 same `Corpus` shape. Extraction, entity resolution, fact derivation, ingest and
 the admissibility rule are the same code, unmodified.
 
-86 facts (26 derived) over 44 sources,
-13 principals, 1,118 (fact, principal) pairs.
+105 facts (38 derived) over 49 sources,
+13 principals, 1,365 (fact, principal) pairs.
 
 ## Disclosure
 
@@ -49,8 +49,8 @@ attribution for it. These are the readings real systems use.
 
 | gate | leaked |
 |---|---|
-| filed-under | 105 |
-| any-source | 292 |
+| filed-under | 137 |
+| any-source | 453 |
 | cordon | 0 |
 
 - **filed-under** — gate by the single space the node carries. What a graph
@@ -62,7 +62,7 @@ attribution for it. These are the readings real systems use.
 
 ## The gates disagree with each other
 
-292 of the 309 (fact, principal) pairs that must be withheld would be
+453 of the 453 (fact, principal) pairs that must be withheld would be
 decided differently depending on which of its own sources the node was
 attributed to.
 
@@ -99,15 +99,15 @@ GitHub refuses to show the document. The fact derived from it was disclosed anyw
 
 ---
 
-> Elena Fischer (mentioned) is active across 3 product areas: cordon-demo-borealis, cordon-demo-fornax, cordon-demo-handbook.
+> Tomas Nowak (mentioned) is active across 4 product areas: cordon-demo-atlas, cordon-demo-draco, cordon-demo-fornax, cordon-demo-gemini.
 
-Rests on `cordon-demo-fornax`, `cordon-demo-borealis`, `cordon-demo-handbook`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-fornax`, `cordon-demo-borealis`.
+Rests on `cordon-demo-fornax`, `cordon-demo-gemini`, `cordon-demo-draco`, `cordon-demo-atlas`. The anonymous asker holds `cordon-demo-gemini` — enough for a document-level gate — and lacks `cordon-demo-fornax`, `cordon-demo-draco`, `cordon-demo-atlas`.
 
-Source: https://github.com/cordon-demo/cordon-demo-fornax/issues/3
+Source: https://github.com/cordon-demo/cordon-demo-fornax/issues/2
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}' \
-    https://api.github.com/repos/cordon-demo/cordon-demo-fornax/issues/3
+    https://api.github.com/repos/cordon-demo/cordon-demo-fornax/issues/2
 404
 ```
 
@@ -115,15 +115,15 @@ GitHub refuses to show the document. The fact derived from it was disclosed anyw
 
 ---
 
-> Ingrid Holm (mentioned) is active across 4 product areas: cordon-demo-borealis, cordon-demo-handbook, cordon-demo-eridanus, cordon-demo-gemini.
+> Marcus Vale (mentioned) is active across 4 product areas: cordon-demo-atlas, cordon-demo-cygnus, cordon-demo-draco, cordon-demo-handbook.
 
-Rests on `cordon-demo-gemini`, `cordon-demo-borealis`, `cordon-demo-eridanus`, `cordon-demo-handbook`. The anonymous asker holds `cordon-demo-gemini`, `cordon-demo-eridanus`, `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-borealis`.
+Rests on `cordon-demo-draco`, `cordon-demo-atlas`, `cordon-demo-handbook`, `cordon-demo-cygnus`. The anonymous asker holds `cordon-demo-handbook` — enough for a document-level gate — and lacks `cordon-demo-draco`, `cordon-demo-atlas`, `cordon-demo-cygnus`.
 
-Source: https://github.com/cordon-demo/cordon-demo-borealis/issues/5
+Source: https://github.com/cordon-demo/cordon-demo-draco/issues/2
 
 ```
 $ curl -s -o /dev/null -w '%{http_code}' \
-    https://api.github.com/repos/cordon-demo/cordon-demo-borealis/issues/5
+    https://api.github.com/repos/cordon-demo/cordon-demo-draco/issues/2
 404
 ```
 
