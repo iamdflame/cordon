@@ -24,6 +24,7 @@
 import type { Artifact, Corpus, FactNode, Question } from '../cordon/model.js';
 import { admissible, type PermissionModel } from '../cordon/acl.js';
 import { FactIndex } from '../cordon/query.js';
+import type { Retriever } from './retrievers.js';
 import {
   answerKind,
   assembleAnswer,
@@ -64,10 +65,10 @@ export interface EvaluationInput {
   corpus: Corpus;
   facts: FactNode[];
   permissions: PermissionModel;
-  /** BM25 over full artifact text. */
-  artifactIndex: FactIndex;
-  /** BM25 over derived facts only. */
-  derivedIndex: FactIndex;
+  /** Retrieval over full artifact text. Any ranker with a `search`. */
+  artifactIndex: Retriever;
+  /** Retrieval over derived facts only. */
+  derivedIndex: Retriever;
   /** Required spaces per derived fact, obtained by traversal. */
   requiredByFact: Map<string, string[]>;
   answerContext: AnswerContext;
@@ -299,7 +300,7 @@ export function evaluate(input: EvaluationInput): EvaluationResult {
 export function evaluateLexicalBaseline(
   corpus: Corpus,
   questions: Question[],
-  artifactIndex: FactIndex,
+  artifactIndex: Retriever,
   answerContext: AnswerContext,
   topArtifacts: number,
 ): { f1: number; precision: number; recall: number; n: number } {

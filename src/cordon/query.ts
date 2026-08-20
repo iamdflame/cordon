@@ -288,6 +288,8 @@ export function tokenise(text: string): string[] {
 
 /** Lexical index over facts. Deliberately conventional: the graph is the novelty. */
 export class FactIndex {
+  /** Identifies this ranker in the retriever sweep. */
+  readonly name = 'bm25';
   private readonly df = new Map<string, number>();
   private readonly docs: Array<{ fact: FactNode; tokens: string[]; length: number }> = [];
   private averageLength = 1;
