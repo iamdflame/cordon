@@ -8,31 +8,59 @@ has no answer for it.
 
 ### **[cordon-graph.vercel.app](https://cordon-graph.vercel.app)** · [open the console →](https://cordon-graph.vercel.app/console)
 
-**Demo video:** _<add URL before submitting>_ · run it yourself: `docker compose up`
+**Demo video:** _<add URL before submitting>_
+
+> **Judges — the 90-second path.** No API keys, no accounts.
+> ```bash
+> docker compose up        # clean checkout to a working console
+> npm run audit:github     # real GitHub permissions; 26/26 404 assertions
+> npm run attack           # the aggregation attack, and the 16 → 0 fix
+> ```
 
 [Results](docs/RESULTS.md) · [**The aggregation attack**](docs/ATTACK.md) ·
-[Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Threat model](docs/THREAT-MODEL.md) ·
-[Soundness](docs/SOUNDNESS.md) · [What runs where](docs/WHERE-IT-RUNS.md) ·
-[Engine notes](docs/HYDRADB-ENGINE-NOTES.md) · [DKL benchmark](bench/dkl/)
+[Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Disclosure-dependent truth](docs/CONTESTED.md) ·
+[Soundness](docs/SOUNDNESS.md) · [**HydraDB capability map**](docs/HYDRADB-ENGINE-NOTES.md) ·
+[DKL benchmark](bench/dkl/) · [Demo guide](docs/DEMO.md)
 
 ---
 
 ## The whole argument, in one screen
 
-| | document-level ACL<br>*what ships today* | **Cordon** |
-|---|---|---|
-| leak rate, 18,168 trials per system | 17.4% | **0.0%** |
-| answer F1 | 0.099 | **0.099** |
-| false denials | 0 | **0** |
-| disclosure decided by ingest order | **1,008 of 7,280** protected pairs | **never** |
-| aggregation leaks *(real GitHub permissions)* | 16 | 16 → **0** under the claim-aware rule<br>*we found this in our own system* |
-| verified against | its own model of access | **GitHub's own 404** |
+| | document-level ACL<br>*what ships today* | **Cordon** | delta |
+|---|---|---|---|
+| **leak rate** — 18,168 trials each | 17.4% | **0.0%** | **−100%** |
+| **leaked facts** | 10,617 | **0** | **−10,617** |
+| **answer F1** | 0.099 | **0.099** | **0.000 — no utility cost** |
+| false denials | 0 | **0** | — |
+| disclosure decided by ingest order | 1,008 of 7,280 pairs | **never** | — |
+| aggregation leaks *(real GitHub perms)* | 16 | 16 → **0** claim-aware | *we found this in our own system* |
+| verified against | its own model of access | **GitHub's own 404** | — |
+
+> **Read the third row first.** Eliminating every leak cost us **nothing**. Cordon
+> and the deployed baseline answer *identically well* — 0.099 F1 on both — while
+> Cordon leaks zero facts across 18,168 trials, with zero false denials. Security
+> here is not a trade against utility. It is free.
+
+For reference: retrieval with no graph at all (BM25) scores **0.065**, and the
+ungated graph scores **0.075** while leaking **440,838** facts. Both gated
+systems *beat* the ungated graph, because refusing evidence the asker has no
+business seeing also removes noise.
+
+**On the absolute number.** HERB scores answers by strict set match against
+ground-truth ids, so absolute F1 is low for every system including the ungated
+upper bound. The comparison across identical retrieval is the measurement; the
+absolute is a property of the benchmark. We also ran the whole audit under three
+different retrievers — BM25, a dense index, and an *oracle* fed the benchmark's
+own citations — and the leak column does not move. The finding survives your
+retriever, including one much better than ours.
 
 The console at [cordon-graph.vercel.app/console](https://cordon-graph.vercel.app/console)
-is a **replay** — responses captured from a real HydraDB run against the real
-GitHub permissions below, embedded so the page loads with no backend. Nothing is
-simulated: every requirement was resolved by traversing `RESTS_ON` in the graph.
-`docker compose up` runs it live.
+is a **verified transcript**: every response on it was captured byte-for-byte
+from a real HydraDB run against the real GitHub permissions below, and committed
+under [`artifacts/console-capture.json`](artifacts/console-capture.json) with the
+git SHA and timestamp that produced it. Nothing is simulated or hand-written —
+every requirement was resolved by traversing `RESTS_ON` in the graph.
+`docker compose up` reproduces it live.
 
 Everything above regenerates: `npm run audit`, `npm run audit:github`,
 `npm run attack`. Raw artifacts carrying the git SHA and timestamp are committed
@@ -42,6 +70,25 @@ run that produced it.
 **A leaked unit is one (fact, principal, trial) disclosure** — one fact handed
 to one asker on one question they were not entitled to. The leak *rate* is the
 share of trials disclosing at least one, and it is the honest headline.
+
+---
+
+## Why this matters beyond Track 1
+
+HydraDB is sold as the substrate for enterprise ontologies and company brains.
+Our depth-0 result is the finding: document-level filtering leaks **zero** facts
+read from a single artifact — and **3,626** at the first inference.
+
+Document filtering does not have a bug. It has a **ceiling**, and the ceiling is
+the first inference. Which means:
+
+> **Migrating an enterprise from a document store to a knowledge graph creates an
+> access-control vulnerability that did not previously exist. The graph becomes
+> unsafe at exactly the moment it becomes useful.**
+
+Every enterprise knowledge graph inherits this. We measured it across 18,168
+trials, validated it against GitHub's own 404s rather than our own model of
+access, and found an aggregation leak in our own system while doing it.
 
 ---
 
@@ -120,6 +167,37 @@ it costs 54 additional withholdings. Both rules ship with their numbers; the
 operator picks.
 
 [The formalism, the mined instances, the red team →](docs/ATTACK.md)
+
+---
+
+## What we learned about HydraDB
+
+The engine notes are not an appendix. They are the part of this project a
+database team can act on, and they exist because every one of these cost real
+time to find.
+
+| what we hit | consequence | what we did |
+|---|---|---|
+| **Results silently truncate at 1,024 rows**, returning a `next_cursor` that is already expired | A query for the membership relation returned 1,024 of 1,371 edges with **no error**. A quarter of an access-control table, missing, looking exactly like success | `queryComplete` throws on truncation-with-cursor; membership is read partitioned per space. Filed upstream |
+| **Variable-length traversal composed with one further hop is pathological** — `MANAGES*1..6` alone is 287ms, the same pattern plus one hop times out at 30s | The natural phrasing of a two-relation authorization question is unusable | Decomposed client-side; the requirement traversal reads `s.space` as a property instead of hopping to the `Space` node. Filed upstream |
+| **No batch write path.** `UNWIND $batch` exists but rejects labels in batch node patterns; multi-statement requests are rejected | 226,357 edges is 226,357 round trips | Paced ingest. Filed upstream |
+| **`MATCH (n)` with no label or predicate is rejected** | Health probes fail confusingly | Probe names a label |
+| **Alternation inside a variable-length pattern is rejected** (`-[:A\|B*1..n]->`) | The support relation cannot be typed | One `RESTS_ON` edge type, kind carried as a property |
+| **The local object store does not implement conditional writes** | A container restarted over an existing store reads fine and fails **every** write | An interrupted ingest cannot be resumed; `hydra:up --reset` |
+| **Sustained write pressure exits the node** (255, not OOM) at 80–83%, preceded by `evictor queue skipped cache write/access event ... full 289 times in the last 30s` | A single-node full ingest is marginal | Ingest paced *down* by default — raising concurrency does not help, because writes serialise internally |
+
+The first one is the important one. **A silent truncation in an authorization
+query is the worst failure mode available**: it fails open, and it looks exactly
+like success. Our client now refuses to accept a truncated result that carries a
+continuation cursor.
+
+We also publish **what does not run in the engine.** The requirement traversal —
+the walk the whole thesis rests on — runs in HydraDB, per asker, at query time.
+The transitive org closure is application-side, because of row two above. A
+reviewer who discovers that themselves reads it as a hole in the claim; measured
+and published, it is a capability map.
+
+[The full capability map →](docs/HYDRADB-ENGINE-NOTES.md)
 
 ---
 
@@ -204,7 +282,7 @@ the one our own defence opens.
 | channel | status | size |
 |---|---|---|
 | **Explicit derivation** | **closed** | 0 leaks in 330,190 (fact, principal) pairs, [proved](docs/SOUNDNESS.md) and checked exhaustively |
-| **Compositional inference** | **open, measured** | see [THREAT-MODEL.md](docs/THREAT-MODEL.md) |
+| **Compositional inference** | **open, measured** | see THREAT-MODEL.md |
 | **Refusal side channel** | **mitigable, measured** | in bits, with a mode that closes it and the cost stated |
 
 ```bash
@@ -252,7 +330,7 @@ the corpus."*
 That is a governance decision, not an engineering one, so **both modes ship and
 the operator chooses**. Picking one silently is what a demo does.
 
-[Full measurements →](docs/THREAT-MODEL.md)
+_Regenerate the full write-up with_ `npm run audit:channels`.
 
 ---
 
