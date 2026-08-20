@@ -29,6 +29,15 @@ async function main() {
    */
   const isSample = args.includes('--sample');
   const spacesArg = args.find((a) => a.startsWith('--spaces='));
+  /*
+   * Ingest pacing. The OSS engine's cache evictor saturates under sustained
+   * write pressure on a single node - it logs "evictor queue skipped cache
+   * write/access event because it was full" and eventually exits 255 around
+   * 80% of a 226k-edge ingest. Lower concurrency is slower per edge on an
+   * empty store and more likely to actually finish on a full one.
+   */
+  const concurrencyArg = args.find((a) => a.startsWith('--concurrency='));
+  const concurrency = concurrencyArg ? Number(concurrencyArg.split('=')[1]) : 8;
   const spaces = isSample ? 3 : spacesArg ? Number(spacesArg.split('=')[1]) : undefined;
 
   const client = new HydraClient();
@@ -44,6 +53,7 @@ async function main() {
     dataRoot: 'data/herb',
     client,
     graphId: process.env.CORDON_GRAPH ?? (isSample ? 'cordon-sample' : 'cordon-v1'),
+    concurrency,
     ...(spaces !== undefined ? { spaces } : {}),
     ...(dryRun ? { dryRun: true } : {}),
     onProgress: (phase, done, total, detail) => {

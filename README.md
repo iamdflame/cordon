@@ -6,8 +6,9 @@ A fact inferred from three documents is not a document. It has no ACL of its own
 so document-level filtering, which is what every enterprise AI assistant does,
 has no answer for it.
 
-**Demo video:** _<add URL before submitting>_ · **Live console:** _<add URL>_
-· `docker compose up`
+### **[cordon-graph.vercel.app](https://cordon-graph.vercel.app)** · [open the console →](https://cordon-graph.vercel.app/console)
+
+**Demo video:** _<add URL before submitting>_ · run it yourself: `docker compose up`
 
 [Results](docs/RESULTS.md) · [**The aggregation attack**](docs/ATTACK.md) ·
 [Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Threat model](docs/THREAT-MODEL.md) ·
@@ -26,6 +27,12 @@ has no answer for it.
 | disclosure decided by ingest order | **1,008 of 7,280** protected pairs | **never** |
 | aggregation leaks *(real GitHub permissions)* | 16 | 16 → **0** under the claim-aware rule<br>*we found this in our own system* |
 | verified against | its own model of access | **GitHub's own 404** |
+
+The console at [cordon-graph.vercel.app/console](https://cordon-graph.vercel.app/console)
+is a **replay** — responses captured from a real HydraDB run against the real
+GitHub permissions below, embedded so the page loads with no backend. Nothing is
+simulated: every requirement was resolved by traversing `RESTS_ON` in the graph.
+`docker compose up` runs it live.
 
 Everything above regenerates: `npm run audit`, `npm run audit:github`,
 `npm run attack`. Raw artifacts carrying the git SHA and timestamp are committed

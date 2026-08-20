@@ -22,6 +22,7 @@
     "audit:github": "tsx src/bench/github.ts",
     "audit:channels": "tsx src/bench/channels.ts",
     "attack": "tsx src/attack/run.ts",
+    "capture": "tsx src/bench/capture.ts",
     "audit:contested": "tsx src/bench/contested.ts",
     "audit:contested:github": "tsx src/bench/contested.ts --github",
     "mcp": "tsx src/mcp/server.ts",

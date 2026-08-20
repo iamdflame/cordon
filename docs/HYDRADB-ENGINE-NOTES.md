@@ -188,3 +188,41 @@ store and ingest again (`npm run hydra:up -- --reset`). Anything that must
 survive a restart has to live outside the graph; for us that is
 `fixtures/github/snapshot.json`, which is why the GitHub audit replays from a
 file rather than from the database.
+
+## UNWIND batching exists, but not for a typed graph
+
+The engine accepts `UNWIND $batch AS row CREATE ...` when the batch comes from a
+`parameters` object, which looked like a large win: our ingest is 226,357
+single-statement round trips. It is not usable, and the errors narrow down
+precisely why:
+
+```
+UNWIND batch input must be a parameter          -- inline list rejected
+UNWIND batch supports one-hop relationships only
+UNWIND batch node patterns do not support labels
+```
+
+Every ingest statement is a one-hop relationship, so the second restriction is
+fine. The third is fatal: a batch cannot set node labels, and a graph without
+labels is not a graph we can query — every traversal we run is label-qualified.
+So the fast path exists but is closed to any typed ingest.
+
+## Sustained write pressure exits the node
+
+A single-node ingest of 226,357 edges completes, but it is marginal. Three runs
+died at 80–83% with exit 255, not OOM-killed by Docker, preceded by:
+
+```
+evictor queue skipped cache write/access event because it was full
+289 times in the last 30s
+```
+
+The cache evictor saturates while compaction is running, and the node exits.
+Concurrency does not help — 16 parallel writers is *faster* than 64 on an empty
+store, because writes serialise internally anyway — so the mitigation is to pace
+the ingest down (`npm run build:graph -- --concurrency=6`) and let compaction
+keep up.
+
+Combined with the conditional-write limitation above, this is the operational
+shape to plan around: **an interrupted ingest cannot be resumed and a slow ingest
+is more likely to finish than a fast one.**

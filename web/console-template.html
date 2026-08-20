@@ -1,0 +1,484 @@
+<title>Cordon Disclosure Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,500;1,400&display=swap">
+
+<style>
+  :root {
+    /* Light: bone ground, slate ink, amber signal. The neutral is pulled
+       slightly blue so it sits with the accent rather than beside it. */
+    --ground: #F6F7F8;
+    --panel: #FFFFFF;
+    --panel-2: #EFF1F3;
+    --ink: #10161B;
+    --ink-2: #45525C;
+    --ink-3: #75828C;
+    --rule: #DCE1E5;
+    --rule-strong: #C3CBD2;
+    --accent: #B4741B;
+    --accent-soft: #F5E7CE;
+    --admit: #2F7355;
+    --admit-soft: #DCEDE4;
+    --withhold: #9E3A32;
+    --withhold-soft: #F6DEDB;
+    --private: #9E3A32;
+    --shadow: 0 1px 2px rgba(16, 22, 27, .06), 0 8px 24px rgba(16, 22, 27, .05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0D1216;
+      --panel: #141B21;
+      --panel-2: #1A232B;
+      --ink: #E6ECF1;
+      --ink-2: #A3B0BA;
+      --ink-3: #6F7E89;
+      --rule: #253038;
+      --rule-strong: #37454F;
+      --accent: #E0A550;
+      --accent-soft: #3A2C15;
+      --admit: #6FBF97;
+      --admit-soft: #16301F;
+      --withhold: #E08078;
+      --withhold-soft: #35191A;
+      --private: #E08078;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0D1216;
+    --panel: #141B21;
+    --panel-2: #1A232B;
+    --ink: #E6ECF1;
+    --ink-2: #A3B0BA;
+    --ink-3: #6F7E89;
+    --rule: #253038;
+    --rule-strong: #37454F;
+    --accent: #E0A550;
+    --accent-soft: #3A2C15;
+    --admit: #6FBF97;
+    --admit-soft: #16301F;
+    --withhold: #E08078;
+    --withhold-soft: #35191A;
+    --private: #E08078;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 24px 72px; }
+
+  /* ---------------------------------------------------------------- header */
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 22px; margin-bottom: 26px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px;
+  }
+
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 500; font-size: clamp(26px, 4vw, 38px);
+    line-height: 1.15; margin: 0 0 10px; text-wrap: balance; letter-spacing: -.01em;
+  }
+
+  .lede { margin: 0; max-width: 66ch; color: var(--ink-2); font-size: 16px; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .provenance {
+    margin-top: 16px; padding: 11px 14px;
+    background: var(--panel-2); border: 1px solid var(--rule); border-radius: 6px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; color: var(--ink-2); line-height: 1.7;
+  }
+  .provenance b { color: var(--ink); font-weight: 600; }
+
+  /* ----------------------------------------------------------------- layout */
+  .cols { display: grid; grid-template-columns: 288px minmax(0, 1fr); gap: 26px; align-items: start; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 8px; box-shadow: var(--shadow);
+  }
+
+  .panel-head {
+    padding: 13px 16px; border-bottom: 1px solid var(--rule);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  }
+  .panel-title {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3);
+  }
+
+  /* --------------------------------------------------------------- rail */
+  .rail { position: sticky; top: 20px; }
+  .principals { max-height: 62vh; overflow-y: auto; padding: 6px; }
+
+  .principal {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    background: transparent; border: 1px solid transparent; border-radius: 6px;
+    padding: 9px 11px; color: inherit; font: inherit; margin-bottom: 2px;
+  }
+  .principal:hover { background: var(--panel-2); }
+  .principal[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+  .principal:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .principal-name {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px; font-weight: 500; display: block;
+  }
+  .principal-meta { font-size: 11.5px; color: var(--ink-3); display: block; margin-top: 2px; }
+
+  /* --------------------------------------------------------------- summary */
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--rule); }
+  .stat { padding: 15px 16px; border-right: 1px solid var(--rule); }
+  .stat:last-child { border-right: 0; }
+  .stat-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-3); display: block; margin-bottom: 5px;
+  }
+  .stat-value { font-size: 27px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .stat-note { font-size: 11.5px; color: var(--ink-3); margin-top: 5px; display: block; }
+  .stat.bad .stat-value { color: var(--withhold); }
+  .stat.good .stat-value { color: var(--admit); }
+
+  .spaces-held { padding: 13px 16px; border-bottom: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+  .chip {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; padding: 2.5px 7px; border-radius: 4px;
+    border: 1px solid var(--rule-strong); color: var(--ink-2); white-space: nowrap;
+  }
+  .chip.held { background: var(--admit-soft); border-color: transparent; color: var(--admit); font-weight: 500; }
+  .chip.lacks { background: var(--withhold-soft); border-color: transparent; color: var(--withhold); font-weight: 500; }
+  .chip.priv::before { content: "lock "; font-size: 9px; opacity: .7; }
+
+  /* ----------------------------------------------------------------- facts */
+  .facts { padding: 0; }
+
+  .fact { border-bottom: 1px solid var(--rule); }
+  .fact:last-child { border-bottom: 0; }
+
+  .fact-head {
+    display: grid; grid-template-columns: 4px minmax(0, 1fr) auto;
+    gap: 0 13px; align-items: start; width: 100%;
+    background: transparent; border: 0; color: inherit; font: inherit;
+    text-align: left; cursor: pointer; padding: 0;
+  }
+  .fact-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* Severity stripe: state readable before any text is. */
+  .stripe { align-self: stretch; background: var(--admit); }
+  .fact[data-verdict="withheld"] .stripe { background: var(--withhold); }
+  .fact[data-verdict="leak"] .stripe { background: var(--accent); }
+
+  .fact-body { padding: 14px 0 14px 3px; min-width: 0; }
+
+  .fact-text { margin: 0 0 8px; font-size: 14.5px; line-height: 1.5; }
+
+  .fact-tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .lvl {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-3); border: 1px solid var(--rule-strong); border-radius: 3px; padding: 1.5px 5px;
+  }
+
+  .gates { display: flex; gap: 0; padding: 14px 16px 14px 0; align-items: center; }
+  .gate { text-align: center; padding: 0 11px; border-left: 1px solid var(--rule); }
+  .gate:first-child { border-left: 0; }
+  .gate-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-3); display: block; margin-bottom: 4px; white-space: nowrap;
+  }
+  .verdict {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block;
+  }
+  .verdict.yes { background: var(--admit-soft); color: var(--admit); }
+  .verdict.no { background: var(--withhold-soft); color: var(--withhold); }
+  .verdict.leak { background: var(--accent-soft); color: var(--accent); }
+
+  /* --------------------------------------------------------------- details */
+  .detail { padding: 0 16px 18px 20px; display: none; }
+  .fact[data-open="true"] .detail { display: block; }
+
+  .detail h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-3); margin: 16px 0 7px; font-weight: 500;
+  }
+
+  .chain { list-style: none; margin: 0; padding: 0; }
+  .chain li {
+    border-left: 2px solid var(--rule-strong); padding: 0 0 0 13px; margin: 0 0 9px;
+  }
+  .chain .src-space {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; color: var(--ink-3);
+  }
+  .chain .src-space.private { color: var(--private); font-weight: 500; }
+  .chain .src-text { font-size: 13px; color: var(--ink-2); margin: 2px 0 0; }
+  .chain a { color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
+  .chain a:hover { opacity: .8; }
+
+  .callout {
+    margin-top: 14px; padding: 12px 14px; border-radius: 6px;
+    background: var(--withhold-soft); border: 1px solid var(--withhold);
+    font-size: 13.5px; line-height: 1.55;
+  }
+  .callout b { font-weight: 600; }
+  .callout code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
+    background: var(--panel); padding: 1px 5px; border-radius: 3px;
+  }
+
+  .empty { padding: 40px 16px; text-align: center; color: var(--ink-3); font-size: 14px; }
+
+  footer {
+    margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--ink-3); max-width: 74ch;
+  }
+  footer a { color: var(--accent); }
+
+  .filters { display: flex; gap: 6px; padding: 11px 16px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+  .filter {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px;
+    padding: 4px 9px; border-radius: 5px; border: 1px solid var(--rule-strong);
+    background: transparent; color: var(--ink-2); cursor: pointer;
+  }
+  .filter[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .principal, .filter, .fact-head { transition: background-color .12s ease; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Cordon &middot; derived-knowledge access control</p>
+    <h1>Same question. Different person. Different answer.</h1>
+    <p class="lede">
+      Every fact below was <strong>derived</strong> from more than one repository, so no single
+      document&rsquo;s permissions govern it. Pick a principal and watch three gates disagree
+      about what that person may be told.
+    </p>
+    <div class="provenance" id="provenance"></div>
+  </header>
+
+  <div class="cols">
+    <aside>
+      <div class="panel rail">
+        <div class="panel-head">
+          <span class="panel-title">Ask as</span>
+          <span class="panel-title" id="principal-count"></span>
+        </div>
+        <div class="principals" id="principals" role="group" aria-label="Principal"></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="panel">
+        <div class="summary" id="summary"></div>
+        <div class="spaces-held" id="spaces-held"></div>
+        <div class="filters" role="group" aria-label="Filter facts">
+          <button class="filter" data-filter="all" aria-pressed="true">All facts</button>
+          <button class="filter" data-filter="withheld" aria-pressed="false">Withheld by Cordon</button>
+          <button class="filter" data-filter="leak" aria-pressed="false">Leaked by document-ACL</button>
+        </div>
+        <div class="facts" id="facts"></div>
+      </div>
+
+      <footer id="footer"></footer>
+    </main>
+  </div>
+</div>
+
+<script id="capture" type="application/json">__CAPTURE__</script>
+<script>
+  const DATA = JSON.parse(document.getElementById('capture').textContent);
+  const privateSpaces = new Set(DATA.spaces.filter(s => s.private).map(s => s.id));
+  const spaceUrl = Object.fromEntries(DATA.spaces.map(s => [s.id, s.url]));
+  const shortName = id => id.replace(/^cordon-demo-/, '');
+
+  let current = DATA.principals.find(p => p.id === 'public') || DATA.principals[0];
+  let filter = 'all';
+
+  /* Verdict for a fact under the selected principal. */
+  function verdictFor(fact) {
+    const v = fact.verdicts[current.id];
+    if (!v) return null;
+    // A leak is the interesting state: document-level filtering says yes where
+    // the derivation says no. It gets its own colour, not a shade of "no".
+    const leak = v.documentAcl && !v.cordon;
+    return { ...v, leak, state: v.cordon ? 'admitted' : (leak ? 'leak' : 'withheld') };
+  }
+
+  function renderProvenance() {
+    const el = document.getElementById('provenance');
+    const priv = DATA.spaces.filter(s => s.private).length;
+    el.innerHTML =
+      `Recorded from a live HydraDB run against <b>${DATA.spaces.length} real GitHub repositories</b> ` +
+      `(${priv} private, ${DATA.spaces.length - priv} public) in the <b>${DATA.owner}</b> organisation, ` +
+      `with <b>${DATA.teams.length} nested teams</b> as principals.<br>` +
+      `Requirements were resolved by graph traversal, never read from a field. ` +
+      `Commit <b>${DATA.gitSha.slice(0, 12)}</b> &middot; ${DATA.generatedAt.slice(0, 19).replace('T', ' ')}Z`;
+  }
+
+  function renderPrincipals() {
+    const host = document.getElementById('principals');
+    document.getElementById('principal-count').textContent = DATA.principals.length + ' principals';
+    host.innerHTML = '';
+    for (const p of DATA.principals) {
+      const btn = document.createElement('button');
+      btn.className = 'principal';
+      btn.setAttribute('aria-pressed', String(p.id === current.id));
+      const priv = p.spaces.filter(s => privateSpaces.has(s)).length;
+      btn.innerHTML =
+        `<span class="principal-name">${p.id}</span>` +
+        `<span class="principal-meta">${p.spaces.length} repositories &middot; ${priv} private</span>`;
+      btn.addEventListener('click', () => { current = p; render(); });
+      host.appendChild(btn);
+    }
+  }
+
+  function renderSummary() {
+    const facts = DATA.facts.map(f => ({ f, v: verdictFor(f) })).filter(x => x.v);
+    const admitted = facts.filter(x => x.v.cordon).length;
+    const withheld = facts.length - admitted;
+    const leaked = facts.filter(x => x.v.leak).length;
+
+    document.getElementById('summary').innerHTML =
+      `<div class="stat"><span class="stat-label">Cordon admits</span>` +
+      `<span class="stat-value">${admitted}</span>` +
+      `<span class="stat-note">of ${facts.length} derived facts</span></div>` +
+      `<div class="stat"><span class="stat-label">Cordon withholds</span>` +
+      `<span class="stat-value">${withheld}</span>` +
+      `<span class="stat-note">missing at least one required repo</span></div>` +
+      `<div class="stat ${leaked > 0 ? 'bad' : 'good'}"><span class="stat-label">Document-ACL leaks</span>` +
+      `<span class="stat-value">${leaked}</span>` +
+      `<span class="stat-note">${leaked > 0 ? 'disclosed despite missing evidence' : 'none for this principal'}</span></div>`;
+
+    const held = document.getElementById('spaces-held');
+    held.innerHTML = '<span class="chip" style="border:0;padding-left:0">may read</span>' +
+      DATA.spaces.map(s => {
+        const has = current.spaces.includes(s.id);
+        return `<span class="chip ${has ? 'held' : 'lacks'} ${s.private ? 'priv' : ''}">${shortName(s.id)}</span>`;
+      }).join('');
+  }
+
+  function renderChain(nodes, depth) {
+    if (!nodes || !nodes.length || depth > 2) return '';
+    return '<ul class="chain">' + nodes.map(n => {
+      if (n.kind === 'source') {
+        const isPriv = privateSpaces.has(n.space);
+        const link = n.locator
+          ? `<a href="${n.locator}" target="_blank" rel="noopener">${n.locator.replace('https://github.com/', '')}</a>`
+          : '';
+        return `<li><span class="src-space ${isPriv ? 'private' : ''}">${shortName(n.space)}` +
+          `${isPriv ? ' &middot; private' : ' &middot; public'}</span> ${link}` +
+          `<p class="src-text">${n.text}</p></li>`;
+      }
+      return `<li><span class="src-space">level ${n.level} fact</span>` +
+        `<p class="src-text">${n.text}</p>${renderChain(n.restsOn, depth + 1)}</li>`;
+    }).join('') + '</ul>';
+  }
+
+  function renderFacts() {
+    const host = document.getElementById('facts');
+    host.innerHTML = '';
+
+    const rows = DATA.facts
+      .map(f => ({ f, v: verdictFor(f) }))
+      .filter(x => x.v)
+      .filter(x => filter === 'all' || (filter === 'withheld' ? !x.v.cordon : x.v.leak))
+      .sort((a, b) => (a.v.leak === b.v.leak ? b.f.level - a.f.level : a.v.leak ? -1 : 1));
+
+    if (!rows.length) {
+      host.innerHTML = `<p class="empty">No facts match this filter for <code>${current.id}</code>.</p>`;
+      return;
+    }
+
+    for (const { f, v } of rows) {
+      const el = document.createElement('article');
+      el.className = 'fact';
+      el.dataset.verdict = v.state === 'admitted' ? 'admitted' : v.state;
+      el.dataset.open = 'false';
+
+      const gate = (label, ok, cls) =>
+        `<div class="gate"><span class="gate-label">${label}</span>` +
+        `<span class="verdict ${cls}">${ok}</span></div>`;
+
+      el.innerHTML =
+        `<button class="fact-head" aria-expanded="false">` +
+        `<span class="stripe"></span>` +
+        `<span class="fact-body">` +
+        `<p class="fact-text">${f.text}</p>` +
+        `<span class="fact-tags">` +
+        `<span class="lvl">level ${f.level}</span>` +
+        f.requires.map(s => `<span class="chip ${current.spaces.includes(s) ? 'held' : 'lacks'}">${shortName(s)}</span>`).join('') +
+        `</span></span>` +
+        `<span class="gates">` +
+        gate('document-acl', v.documentAcl ? 'discloses' : 'withholds', v.leak ? 'leak' : (v.documentAcl ? 'yes' : 'no')) +
+        gate('any-source', v.anySource ? 'discloses' : 'withholds', v.anySource && !v.cordon ? 'leak' : (v.anySource ? 'yes' : 'no')) +
+        gate('cordon', v.cordon ? 'discloses' : 'withholds', v.cordon ? 'yes' : 'no') +
+        `</span></button>` +
+        `<div class="detail">` +
+        (v.leak
+          ? `<div class="callout"><b>This is the leak.</b> Document-level filtering checks only ` +
+            `<code>${shortName(f.filedUnder)}</code> &mdash; the repository this fact happens to be filed ` +
+            `under &mdash; sees that <code>${current.id}</code> holds it, and hands the fact over. ` +
+            `The evidence underneath sits in <code>${v.missing.map(shortName).join('</code>, <code>')}</code>, ` +
+            `which this principal cannot read. Follow a source link below and GitHub answers 404.</div>`
+          : '') +
+        `<h4>Rests on</h4>${renderChain(f.restsOn, 0)}` +
+        `</div>`;
+
+      const head = el.querySelector('.fact-head');
+      head.addEventListener('click', () => {
+        const open = el.dataset.open === 'true';
+        el.dataset.open = String(!open);
+        head.setAttribute('aria-expanded', String(!open));
+      });
+
+      host.appendChild(el);
+    }
+  }
+
+  function renderFooter() {
+    document.getElementById('footer').innerHTML =
+      `This page is a <b>replay</b>, not a live instance: the responses were captured from a real ` +
+      `HydraDB run and embedded, so it loads with no backend. Nothing is simulated &mdash; every ` +
+      `requirement was resolved by traversing <code>RESTS_ON</code> in the graph. ` +
+      `Run it live with <code>docker compose up</code>. ` +
+      `<a href="https://github.com/iamdflame/cordon">Source and full results &rarr;</a>`;
+  }
+
+  for (const btn of document.querySelectorAll('.filter')) {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      for (const b of document.querySelectorAll('.filter')) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      }
+      renderFacts();
+    });
+  }
+
+  function render() { renderPrincipals(); renderSummary(); renderFacts(); }
+  renderProvenance(); renderFooter(); render();
+</script>

@@ -1,0 +1,759 @@
+<title>Cordon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&display=swap">
+
+<style>
+  /* ------------------------------------------------------------------ *
+   * Deliberately single-theme. The subject is a reading room where
+   * restricted material is handled: the page commits to that world rather
+   * than rendering two ways. Every colour is painted explicitly so it holds
+   * on any host ground.
+   * ------------------------------------------------------------------ */
+  :root {
+    --ink-void:   #07090B;   /* the ground */
+    --ink-panel:  #0E1318;
+    --ink-raised: #141A21;
+    --rule:       #1F2830;
+    --rule-lit:   #2E3A45;
+
+    --text:       #E8EDF1;
+    --text-2:     #9EACB8;
+    --text-3:     #66747F;
+
+    --stamp:      #E0A550;   /* classification amber */
+    --stamp-dim:  #7A5A26;
+    --admit:      #6FBF97;
+    --withhold:   #E27A70;
+    --paper:      #F2EFE9;   /* document excerpts read as paper */
+    --paper-ink:  #1A1815;
+
+    --measure: 68ch;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--ink-void);
+    color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .narrow { max-width: var(--measure); }
+
+  a { color: var(--stamp); }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--stamp); margin: 0 0 18px;
+  }
+
+  h1, h2, h3 { font-family: "Newsreader", Georgia, "Times New Roman", serif; font-weight: 400; text-wrap: balance; }
+
+  /* ============================================================== nav */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(7, 9, 11, .88);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-in {
+    max-width: 1080px; margin: 0 auto; padding: 13px 24px;
+    display: flex; align-items: center; gap: 22px;
+  }
+  .brand {
+    font-family: "IBM Plex Mono", monospace; font-weight: 600;
+    letter-spacing: .04em; font-size: 15px; color: var(--text); text-decoration: none;
+  }
+  .brand span { color: var(--stamp); }
+  .nav-links { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .nav-links a {
+    font-size: 13.5px; color: var(--text-2); text-decoration: none;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+    border: 1px solid var(--stamp); color: var(--stamp) !important;
+    padding: 6px 13px; border-radius: 4px;
+  }
+  .nav-cta:hover { background: var(--stamp); color: var(--ink-void) !important; }
+  @media (max-width: 700px) { .nav-links a:not(.nav-cta) { display: none; } }
+
+  /* ============================================================= hero */
+  .hero { padding: 90px 0 70px; border-bottom: 1px solid var(--rule); }
+
+  h1 {
+    font-size: clamp(38px, 6.4vw, 68px);
+    line-height: 1.03; letter-spacing: -.022em; margin: 0 0 26px;
+    max-width: 17ch;
+  }
+  h1 em { font-style: italic; color: var(--stamp); }
+
+  .hero-lede {
+    font-size: clamp(17px, 2.1vw, 20px); color: var(--text-2);
+    max-width: 60ch; margin: 0 0 34px; line-height: 1.55;
+  }
+  .hero-lede strong { color: var(--text); font-weight: 500; }
+
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: "IBM Plex Mono", monospace; font-size: 13.5px;
+    padding: 11px 18px; border-radius: 5px; text-decoration: none;
+    border: 1px solid var(--rule-lit); color: var(--text);
+  }
+  .btn:hover { border-color: var(--text-3); background: var(--ink-panel); }
+  .btn.primary { background: var(--stamp); border-color: var(--stamp); color: var(--ink-void); font-weight: 600; }
+  .btn.primary:hover { background: #EEB868; border-color: #EEB868; }
+
+  /* ------------------------------------------------- the redaction demo */
+  .exhibit {
+    margin-top: 56px; border: 1px solid var(--rule); border-radius: 10px;
+    background: var(--ink-panel); overflow: hidden;
+  }
+  .exhibit-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 18px; border-bottom: 1px solid var(--rule); background: var(--ink-raised);
+  }
+  .exhibit-label {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--text-3);
+  }
+  .ask-as { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .ask-btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    background: transparent; border: 1px solid var(--rule-lit); color: var(--text-2);
+    padding: 5px 11px; border-radius: 4px; cursor: pointer;
+  }
+  .ask-btn[aria-pressed="true"] { background: var(--stamp); border-color: var(--stamp); color: var(--ink-void); font-weight: 600; }
+  .ask-btn:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+
+  .exhibit-body { padding: 26px 22px 24px; }
+
+  .question {
+    font-family: "Newsreader", Georgia, serif; font-size: 20px;
+    color: var(--text); margin: 0 0 22px; font-style: italic;
+  }
+
+  .answer-card {
+    background: var(--paper); color: var(--paper-ink);
+    border-radius: 6px; padding: 20px 22px; position: relative;
+    font-size: 16px; line-height: 1.55;
+  }
+  .answer-card .who {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px;
+    letter-spacing: .1em; text-transform: uppercase; color: #6B675F;
+    display: block; margin-bottom: 9px;
+  }
+
+  /* The redaction bar: the page's central motif. */
+  .redactable { position: relative; display: inline; }
+  .redactable::after {
+    content: ""; position: absolute; inset: -2px -4px;
+    background: #0A0A0A; border-radius: 2px;
+    transform: scaleX(0); transform-origin: left center;
+  }
+  .redacted .redactable::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: no-preference) {
+    .redactable::after { transition: transform .34s cubic-bezier(.4, 0, .2, 1); }
+  }
+
+  .verdict-strip {
+    display: flex; gap: 0; margin-top: 16px;
+    border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
+  }
+  .vcell { flex: 1; padding: 12px 14px; border-right: 1px solid var(--rule); }
+  .vcell:last-child { border-right: 0; }
+  .vcell .gate {
+    font-family: "IBM Plex Mono", monospace; font-size: 10px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--text-3);
+    display: block; margin-bottom: 5px;
+  }
+  .vcell .call { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; }
+  .call.pass { color: var(--admit); }
+  .call.stop { color: var(--withhold); }
+  .call.leak { color: var(--stamp); }
+
+  .why {
+    margin-top: 15px; padding: 13px 16px; border-radius: 6px;
+    background: rgba(224, 165, 80, .07); border-left: 2px solid var(--stamp);
+    font-size: 14.5px; color: var(--text-2); line-height: 1.55;
+  }
+  .why b { color: var(--text); font-weight: 600; }
+  .why code, .mono-inline {
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+    background: var(--ink-void); padding: 1px 5px; border-radius: 3px; color: var(--text);
+  }
+
+  /* ========================================================== sections */
+  section { padding: 78px 0; border-bottom: 1px solid var(--rule); }
+
+  h2 {
+    font-size: clamp(27px, 3.6vw, 38px); line-height: 1.15;
+    letter-spacing: -.015em; margin: 0 0 18px; max-width: 20ch;
+  }
+  h3 {
+    font-size: 21px; line-height: 1.25; margin: 0 0 10px; color: var(--text);
+  }
+  p { margin: 0 0 17px; }
+  .lede { font-size: 18px; color: var(--text-2); max-width: var(--measure); }
+  .body-text { color: var(--text-2); max-width: var(--measure); }
+  .body-text strong { color: var(--text); font-weight: 500; }
+
+  /* ------------------------------------------------------- score table */
+  .scoreboard { width: 100%; border-collapse: collapse; margin: 34px 0 12px; }
+  .scoreboard th, .scoreboard td {
+    text-align: left; padding: 14px 14px; border-bottom: 1px solid var(--rule);
+    font-size: 14.5px;
+  }
+  .scoreboard thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--text-3);
+    border-bottom-color: var(--rule-lit);
+  }
+  .scoreboard td:first-child { color: var(--text-2); width: 42%; }
+  .scoreboard td.num {
+    font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+    font-size: 15px;
+  }
+  .scoreboard td.them { color: var(--withhold); }
+  .scoreboard td.us { color: var(--admit); font-weight: 600; }
+  .scoreboard tr:last-child td { border-bottom: 0; }
+  .table-wrap { overflow-x: auto; }
+
+  /* ------------------------------------------------------------ stats */
+  .stat-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+    border-radius: 8px; overflow: hidden; margin: 32px 0;
+  }
+  .stat-cell { background: var(--ink-panel); padding: 20px 18px; }
+  .stat-cell .k {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--text-3);
+    display: block; margin-bottom: 8px;
+  }
+  .stat-cell .v {
+    font-family: "IBM Plex Mono", monospace; font-size: 30px; font-weight: 500;
+    line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .stat-cell .v.hot { color: var(--withhold); }
+  .stat-cell .v.cool { color: var(--admit); }
+  .stat-cell .v.warm { color: var(--stamp); }
+  .stat-cell .n { font-size: 13px; color: var(--text-3); margin-top: 7px; display: block; }
+
+  /* ------------------------------------------------------ depth ladder */
+  .ladder { margin: 30px 0; display: flex; flex-direction: column; gap: 2px; }
+  .rung {
+    display: grid; grid-template-columns: 190px 1fr 84px;
+    gap: 14px; align-items: center; padding: 11px 14px;
+    background: var(--ink-panel); border-left: 2px solid var(--rule-lit);
+  }
+  .rung .depth { font-size: 13.5px; color: var(--text-2); }
+  .rung .depth b { color: var(--text); font-weight: 500; }
+  .rung .track { height: 9px; background: var(--ink-raised); border-radius: 2px; overflow: hidden; }
+  .rung .fill { height: 100%; background: var(--withhold); border-radius: 2px; }
+  .rung .val {
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; text-align: right;
+    font-variant-numeric: tabular-nums; color: var(--withhold);
+  }
+  .rung.zero { border-left-color: var(--admit); }
+  .rung.zero .val { color: var(--admit); }
+  @media (max-width: 640px) { .rung { grid-template-columns: 1fr 60px; } .rung .track { display: none; } }
+
+  /* ----------------------------------------------------- the 404 panel */
+  .terminal {
+    background: #05070A; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 20px 22px; margin: 28px 0;
+    font-family: "IBM Plex Mono", monospace; font-size: 13.5px; line-height: 1.75;
+    overflow-x: auto;
+  }
+  .terminal .prompt { color: var(--text-3); }
+  .terminal .cmd { color: var(--text); }
+  .terminal .out-404 { color: var(--withhold); font-size: 26px; font-weight: 600; display: block; margin: 8px 0 4px; }
+  .terminal .note { color: var(--text-3); }
+
+  /* --------------------------------------------------------- callouts */
+  .admission {
+    border: 1px solid var(--stamp-dim); background: rgba(224, 165, 80, .06);
+    border-radius: 8px; padding: 22px 24px; margin: 30px 0;
+  }
+  .admission .tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--stamp);
+    display: block; margin-bottom: 10px;
+  }
+
+  blockquote {
+    margin: 22px 0; padding: 0 0 0 18px; border-left: 2px solid var(--stamp);
+    font-family: "Newsreader", Georgia, serif; font-size: 19px; font-style: italic;
+    color: var(--text); line-height: 1.5; max-width: 62ch;
+  }
+  blockquote cite {
+    display: block; margin-top: 9px; font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px; font-style: normal; color: var(--text-3); letter-spacing: .05em;
+  }
+
+  /* ------------------------------------------------------------ cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; margin: 30px 0; }
+  .card {
+    background: var(--ink-panel); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 20px;
+  }
+  .card h3 { font-family: "IBM Plex Sans", sans-serif; font-size: 15.5px; font-weight: 600; margin-bottom: 8px; }
+  .card p { font-size: 14.5px; color: var(--text-2); margin: 0; }
+
+  .theorem {
+    border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px;
+    background: var(--ink-panel); margin: 18px 0;
+  }
+  .theorem .tname {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--stamp); display: block; margin-bottom: 9px;
+  }
+  .theorem p { margin: 0; font-size: 15.5px; }
+  .theorem .verified {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--admit);
+  }
+
+  /* ----------------------------------------------------------- footer */
+  footer { padding: 60px 0 80px; }
+  .foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 30px; margin-bottom: 40px; }
+  .foot-col h4 {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--text-3); margin: 0 0 12px; font-weight: 500;
+  }
+  .foot-col a { display: block; color: var(--text-2); text-decoration: none; font-size: 14px; margin-bottom: 7px; }
+  .foot-col a:hover { color: var(--stamp); }
+  .colophon { font-size: 13.5px; color: var(--text-3); max-width: var(--measure); border-top: 1px solid var(--rule); padding-top: 22px; }
+</style>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="#top">cordon<span>/</span></a>
+    <div class="nav-links">
+      <a href="#finding">The finding</a>
+      <a href="#proof">The 404</a>
+      <a href="#attack">The attack</a>
+      <a href="console/">Console</a>
+      <a class="nav-cta" href="https://github.com/iamdflame/cordon">Source</a>
+    </div>
+  </div>
+</nav>
+
+<div id="top" class="shell">
+  <header class="hero">
+    <p class="eyebrow">Hack Hydra 2026 &middot; Track 01 &middot; built on HydraDB</p>
+    <h1>Derived knowledge inherits the access control of <em>everything</em> it was derived from.</h1>
+    <p class="hero-lede">
+      A fact inferred from three documents is not a document. It has no ACL of its own &mdash;
+      so document-level filtering, <strong>which is what every enterprise AI assistant does</strong>,
+      has no answer for it. We measured the hole, and closed it.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" href="console/">Open the console &rarr;</a>
+      <a class="btn" href="https://github.com/iamdflame/cordon">Read the source</a>
+      <a class="btn" href="#finding">See the numbers</a>
+    </div>
+
+    <!-- The hero is the product: one fact, two people, watch it redact. -->
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-label">Live &middot; one derived fact</span>
+        <div class="ask-as" role="group" aria-label="Ask as">
+          <button class="ask-btn" data-who="david" aria-pressed="true">David &middot; 4 spaces</button>
+          <button class="ask-btn" data-who="bob" aria-pressed="false">Bob &middot; 2 spaces</button>
+        </div>
+      </div>
+      <div class="exhibit-body">
+        <p class="question">&ldquo;What changes did the Engineering Lead suggest for the AnomalyForce product vision?&rdquo;</p>
+
+        <div class="answer-card" id="answer">
+          <span class="who" id="who-label">Answering as David Miller &middot; VP Engineering</span>
+          Bob Brown (Engineering Lead) is active across four product areas:
+          AnomalyForce, CollaborateForce,
+          <span class="redactable">InsightForce</span>,
+          <span class="redactable">VizForce</span>.
+        </div>
+
+        <div class="verdict-strip">
+          <div class="vcell"><span class="gate">Ungated graph</span><span class="call pass" id="v-ungated">discloses</span></div>
+          <div class="vcell"><span class="gate">Document-level ACL</span><span class="call pass" id="v-doc">discloses</span></div>
+          <div class="vcell"><span class="gate">Cordon</span><span class="call pass" id="v-cordon">discloses</span></div>
+        </div>
+
+        <div class="why" id="why">
+          <b>Correct.</b> David can read all four spaces this fact rests on, so every system
+          discloses it. Now switch to Bob.
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================================================== the finding -->
+  <section id="finding">
+    <p class="eyebrow">01 &middot; the measurement</p>
+    <h2>Document filtering is exactly correct &mdash; until it infers</h2>
+    <p class="lede">
+      1,514 questions from Salesforce&rsquo;s HERB enterprise benchmark, 12 principals across the
+      access spectrum, 18,168 trials per system. Identical retrieval, identical answer assembly.
+      The only difference is what each is willing to disclose.
+    </p>
+
+    <div class="table-wrap">
+      <table class="scoreboard">
+        <thead>
+          <tr><th>Measured over 18,168 trials</th><th>Document-level ACL</th><th>Cordon</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Leak rate</td><td class="num them">17.4%</td><td class="num us">0.0%</td></tr>
+          <tr><td>Answer quality (set-F1)</td><td class="num">0.099</td><td class="num us">0.099</td></tr>
+          <tr><td>False denials</td><td class="num">0</td><td class="num us">0</td></tr>
+          <tr><td>Disclosure decided by ingest order</td><td class="num them">1,008 of 7,280</td><td class="num us">never</td></tr>
+          <tr><td>Verified against</td><td>its own model of access</td><td class="us">GitHub&rsquo;s own 404</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="body-text">
+      Zero leaked at derivation depth 0. That is not a compliment we are paying the baseline &mdash;
+      <strong>it is the finding.</strong> Document filtering does not have a bug. It has a ceiling,
+      and the ceiling is the first inference.
+    </p>
+
+    <div class="ladder">
+      <div class="rung zero">
+        <span class="depth"><b>Depth 0</b> &mdash; read from one artifact</span>
+        <span class="track"><span class="fill" style="width:0%"></span></span>
+        <span class="val">0</span>
+      </div>
+      <div class="rung">
+        <span class="depth"><b>Depth 1</b> &mdash; derived across spaces</span>
+        <span class="track"><span class="fill" style="width:55%"></span></span>
+        <span class="val">3,626</span>
+      </div>
+      <div class="rung">
+        <span class="depth"><b>Depth 2</b> &mdash; derived from derived</span>
+        <span class="track"><span class="fill" style="width:6%"></span></span>
+        <span class="val">400</span>
+      </div>
+      <div class="rung">
+        <span class="depth"><b>Depth 3</b> &mdash; derived from those</span>
+        <span class="track"><span class="fill" style="width:100%"></span></span>
+        <span class="val">6,591</span>
+      </div>
+    </div>
+    <p class="body-text" style="font-size:14.5px;color:var(--text-3)">
+      Facts leaked by document-level filtering, by derivation depth. Cordon: zero on every rung.
+    </p>
+  </section>
+
+  <!-- ================================================== arbitrary -->
+  <section>
+    <p class="eyebrow">02 &middot; worse than wrong</p>
+    <h2>The baseline is not just wrong. It is arbitrary.</h2>
+    <p class="lede">
+      A derived fact carries one space, assigned by whichever source the writer reached first.
+      That assignment is what a document gate reads. So we asked: would it have answered
+      differently had the node been filed under a different one of <em>its own sources</em>?
+    </p>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="k">Pairs to protect</span><span class="v">7,280</span><span class="n">HERB, all principals</span></div>
+      <div class="stat-cell"><span class="k">Answer flips</span><span class="v hot">1,008</span><span class="n">13.8% &mdash; decided by ingest order</span></div>
+      <div class="stat-cell"><span class="k">On real GitHub perms</span><span class="v hot">292 / 309</span><span class="n">94% arbitrary</span></div>
+      <div class="stat-cell"><span class="k">Cordon</span><span class="v cool">0</span><span class="n">never reads the attribution</span></div>
+    </div>
+
+    <blockquote>
+      Same graph, same permissions, same person asking &mdash; opposite answer.
+      A security decision settled by ingest order is not a security decision.
+      <cite>docs/RESULTS.md &middot; regenerate with npm run audit</cite>
+    </blockquote>
+  </section>
+
+  <!-- ================================================== the 404 -->
+  <section id="proof">
+    <p class="eyebrow">03 &middot; not our opinion</p>
+    <h2>The ground truth is somebody else&rsquo;s server</h2>
+    <p class="lede">
+      The strongest objection to any of this is that we invented the access control we then
+      enforced. So the whole pipeline runs a second time against a system that already has
+      permissions: <strong>8 real GitHub repositories</strong> &mdash; 5 private, 3 public &mdash;
+      inside a real organisation with <strong>11 nested teams</strong> as principals.
+      Only the loader differs. Extraction, resolution, derivation and the admissibility rule
+      are the same code.
+    </p>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="k">Principals</span><span class="v">13</span><span class="n">11 real nested teams</span></div>
+      <div class="stat-cell"><span class="k">Doc-ACL leaks</span><span class="v hot">292</span><span class="n">of 1,118 pairs</span></div>
+      <div class="stat-cell"><span class="k">Cordon leaks</span><span class="v cool">0</span><span class="n">same code, same rule</span></div>
+      <div class="stat-cell"><span class="k">404 assertions</span><span class="v cool">26 / 26</span><span class="n">GitHub is the test oracle</span></div>
+    </div>
+
+    <p class="body-text">
+      For every source underneath a withheld fact, the audit issues an unauthenticated request
+      and asserts the refusal:
+    </p>
+
+    <div class="terminal">
+      <span class="prompt">$</span> <span class="cmd">curl -s -o /dev/null -w '%{http_code}' \
+        https://github.com/cordon-demo/cordon-demo-fornax/issues/2</span>
+      <span class="out-404">404</span>
+      <span class="note">GitHub refuses to show the document.
+A document-level gate hands over the fact derived from it.</span>
+    </div>
+
+    <p class="body-text">
+      The check deliberately uses <code class="mono-inline">github.com</code>, not the API.
+      The unauthenticated API allows 60 requests an hour and then answers <strong>403</strong>
+      to everything &mdash; and counting a rate-limit 403 as a pass would fabricate the exact
+      result this section exists to establish. Rate limiting is detected and reported separately
+      from pass and fail.
+    </p>
+  </section>
+
+  <!-- ================================================== the attack -->
+  <section id="attack">
+    <p class="eyebrow">04 &middot; the attack nobody else can express</p>
+    <h2>Two facts you may see, one you may not</h2>
+    <p class="lede">
+      Two facts a principal is entitled to can together determine a third they are not.
+      Document-level filtering cannot defend against this <strong>even in principle</strong>,
+      because the thing being aggregated is not a document. We formalised it, proved what is
+      impossible, and mined the rest from the graph rather than inventing examples.
+    </p>
+
+    <div class="theorem">
+      <span class="tname">Theorem 1 &middot; proved and checked</span>
+      <p>An attacker cannot climb the derivation edges. <code class="mono-inline">required(f)</code>
+      is the union of its supports&rsquo; requirements, so holding every part of a conclusion
+      already entitles you to the conclusion.</p>
+      <p class="verified">0 counterexamples over every case in the graph.</p>
+    </div>
+
+    <div class="theorem">
+      <span class="tname">Theorem 2 &middot; the honest one</span>
+      <p>Cordon is closed under aggregation exactly when every claim about a space is only
+      asserted by facts resting on that space &mdash; <em>claim locality</em>. So the exposure is
+      a property of <strong>the corpus</strong>, not of the rule.</p>
+      <p class="verified">HERB: 0 of 38,600 artifacts name another space. Locality holds exactly.</p>
+    </div>
+
+    <div class="admission">
+      <span class="tag">What we found in our own system</span>
+      <p class="body-text" style="margin-bottom:14px">
+        So we seeded a fixture with the cross-repository references real issues are full of &mdash;
+        and Cordon <strong>leaked 16 times</strong> out of 130 denied pairs. We are reporting that
+        because it locates the mechanism exactly: a <em>public</em> issue naming a <em>private</em>
+        repository.
+      </p>
+      <blockquote style="margin:0 0 14px">
+        &ldquo;Ingrid Holm notes the SDK release depends on <strong>cordon-demo-borealis</strong>
+        integration work.&rdquo;
+        <cite>public repository &middot; asserting a claim about a private one</cite>
+      </blockquote>
+      <p class="body-text" style="margin-bottom:0">
+        The fix follows from the diagnosis: widen the requirement to include the spaces a fact
+        <em>names</em>, not only where its evidence sits. <strong>Leaks go to zero</strong>, and it
+        costs 54 additional withholdings. Both rules ship with their numbers; the operator picks.
+      </p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Compositional inference</h3>
+        <p>Open, measured. A denied fact&rsquo;s claims are partly reachable from permitted ones. Recovery falls as depth rises &mdash; Cordon degrades most gracefully where the explicit channel is most dangerous.</p>
+      </div>
+      <div class="card">
+        <h3>Refusal as an oracle</h3>
+        <p>Our own defence opens it. Naming the space you lack is useful to a colleague and a perfect oracle to an attacker. Measured in bits, with an indistinguishable-abstention mode that closes it and the cost stated.</p>
+      </div>
+      <div class="card">
+        <h3>Disclosure-dependent truth</h3>
+        <p>Whether you perceive a contradiction at all depends on your clearance. Two colleagues ask the same question and receive confidently opposed answers, and neither is told the other side exists.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================== why a graph -->
+  <section>
+    <p class="eyebrow">05 &middot; why this needs HydraDB</p>
+    <h2>Admissibility is a walk, not a lookup</h2>
+
+    <div class="terminal">
+      <span class="note">-- what this fact depends on: walk the support chain to evidence</span>
+      <span class="cmd">MATCH (f:Fact {id: $fact})-[:RESTS_ON*1..5]-&gt;(s:Source) RETURN s.space</span>
+    </div>
+
+    <p class="body-text">
+      The requirement is <strong>discovered</strong> by traversal, per asker, at query time &mdash;
+      never read from a field. It cannot be materialised: with <em>n</em> principals there are
+      2<sup>n</sup> visibility subsets, and precomputing per principal is 30M rows that one
+      membership change invalidates.
+    </p>
+    <p class="body-text">
+      A level-3 fact sits four hops from any evidence and has no edge to a space at all. There is
+      no field to read. <strong>The answer only exists as a walk.</strong>
+    </p>
+    <p class="body-text">
+      And a vector index cannot express this even in principle. An embedding records what a fact
+      <em>resembles</em>; it carries no record of what it was <em>derived from</em>, and a
+      constraint that propagates along derivation has nothing to travel down.
+      <strong>Similarity is not provenance.</strong>
+    </p>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="k">Graph</span><span class="v">95,898</span><span class="n">nodes &middot; 226,357 edges</span></div>
+      <div class="stat-cell"><span class="k">Invariant</span><span class="v cool">0</span><span class="n">violations in 330,190 pairs</span></div>
+      <div class="stat-cell"><span class="k">Entity resolution</span><span class="v warm">100%</span><span class="n">precision &middot; 99% recall, no LLM</span></div>
+      <div class="stat-cell"><span class="k">Engine bug found</span><span class="v warm">1,024</span><span class="n">silent row-cap in an ACL query</span></div>
+    </div>
+
+    <p class="body-text">
+      We also publish <strong>what does not run in the engine</strong>: the transitive org closure
+      is application-side, because a variable-length pattern composed with one further fixed hop
+      times out at 30s while the variable-length half alone takes 287ms. A reviewer who finds that
+      themselves reads it as a hole; measured and published, it is a capability map.
+    </p>
+  </section>
+
+  <!-- ================================================== integrity -->
+  <section>
+    <p class="eyebrow">06 &middot; how to disbelieve us</p>
+    <h2>Every number opens onto the run that produced it</h2>
+    <p class="lede">
+      Cordon&rsquo;s whole thesis is auditability, so nothing here is estimated, projected or
+      illustrative. Raw artifacts carrying the git SHA and timestamp are committed alongside the
+      code.
+    </p>
+
+    <div class="terminal">
+      <span class="prompt">$</span> <span class="cmd">docker compose up</span>              <span class="note"># clean checkout to a working console</span>
+      <span class="prompt">$</span> <span class="cmd">npm run audit</span>                  <span class="note"># the leak table + retriever sweep</span>
+      <span class="prompt">$</span> <span class="cmd">npm run audit:github</span>           <span class="note"># real permissions, no credentials needed</span>
+      <span class="prompt">$</span> <span class="cmd">npm run attack</span>                 <span class="note"># the aggregation census</span>
+      <span class="prompt">$</span> <span class="cmd">npm test</span>                       <span class="note"># incl. property-based soundness</span>
+    </div>
+
+    <p class="body-text">
+      The invariant compares requirements obtained by graph traversal against requirements
+      recomputed independently from the corpus. That distinction is not pedantry: our first
+      version compared a value against itself, could not have failed, and passed for hours.
+      When it was fixed, <strong>47 facts disagreed</strong> &mdash; and that is how a real
+      access-control bug was found.
+    </p>
+
+    <blockquote>
+      A security property only ever checked against the field that produced it is not being
+      checked at all.
+      <cite>the thing we would most want a reviewer to take away</cite>
+    </blockquote>
+  </section>
+
+  <footer>
+    <div class="foot-grid">
+      <div class="foot-col">
+        <h4>Try it</h4>
+        <a href="console/">Disclosure console</a>
+        <a href="https://github.com/iamdflame/cordon">Source on GitHub</a>
+        <a href="https://github.com/iamdflame/cordon#running-it">One-command setup</a>
+      </div>
+      <div class="foot-col">
+        <h4>Results</h4>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/RESULTS.md">HERB benchmark</a>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/RESULTS-GITHUB.md">Real GitHub permissions</a>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/ATTACK.md">The aggregation attack</a>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/THREAT-MODEL.md">Threat model</a>
+      </div>
+      <div class="foot-col">
+        <h4>Method</h4>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/SOUNDNESS.md">Soundness proof</a>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/WHERE-IT-RUNS.md">What runs where</a>
+        <a href="https://github.com/iamdflame/cordon/blob/main/docs/HYDRADB-ENGINE-NOTES.md">Engine notes</a>
+        <a href="https://github.com/iamdflame/cordon/tree/main/bench/dkl">DKL benchmark</a>
+      </div>
+    </div>
+    <p class="colophon">
+      Built for Hack Hydra 2026, Track 01, on the HydraDB open-source engine.
+      Corpus: Salesforce HERB, used unmodified. No language model is used anywhere in the
+      pipeline &mdash; entity resolution is structural and deterministic.
+      The commit history is reconstructed into logical units rather than literal;
+      <a href="https://github.com/iamdflame/cordon#a-note-on-the-commit-history">the README says so plainly</a>.
+    </p>
+  </footer>
+</div>
+
+<script>
+  /* The hero demo. Two real principals from the audit, one derived fact. */
+  const CASES = {
+    david: {
+      label: 'Answering as David Miller · VP Engineering · reads all four spaces',
+      redacted: false,
+      ungated: ['discloses', 'pass'],
+      doc: ['discloses', 'pass'],
+      cordon: ['discloses', 'pass'],
+      why: '<b>Correct.</b> David can read all four spaces this fact rests on, so every system discloses it. Now switch to Bob.'
+    },
+    bob: {
+      label: 'Answering as Bob Brown · VP Engineering · reads AnomalyForce, CollaborateForce',
+      redacted: true,
+      ungated: ['discloses', 'pass'],
+      doc: ['discloses — leak', 'leak'],
+      cordon: ['withholds', 'stop'],
+      why: '<b>This is the leak.</b> Bob can read two of the four spaces underneath this fact. ' +
+           'Document-level filtering checks only <code>AnomalyForce</code> — the space the fact happens ' +
+           'to be <em>filed under</em> — sees Bob has it, and hands the fact over. Cordon walks the ' +
+           'derivation, finds <code>InsightForce</code> and <code>VizForce</code> beneath, and withholds — ' +
+           'naming exactly which two he is missing.'
+    }
+  };
+
+  const answer = document.getElementById('answer');
+  const whoLabel = document.getElementById('who-label');
+  const why = document.getElementById('why');
+  const cells = {
+    ungated: document.getElementById('v-ungated'),
+    doc: document.getElementById('v-doc'),
+    cordon: document.getElementById('v-cordon')
+  };
+
+  function show(key) {
+    const c = CASES[key];
+    answer.classList.toggle('redacted', c.redacted);
+    whoLabel.textContent = c.label;
+    why.innerHTML = c.why;
+    for (const k of ['ungated', 'doc', 'cordon']) {
+      cells[k].textContent = c[k][0];
+      cells[k].className = 'call ' + c[k][1];
+    }
+    for (const b of document.querySelectorAll('.ask-btn')) {
+      b.setAttribute('aria-pressed', String(b.dataset.who === key));
+    }
+  }
+
+  for (const b of document.querySelectorAll('.ask-btn')) {
+    b.addEventListener('click', () => show(b.dataset.who));
+  }
+
+  /* Show the leak on load rather than making the visitor find it. */
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setTimeout(() => show('bob'), 2200);
+  }
+</script>
