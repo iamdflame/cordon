@@ -30,6 +30,8 @@ import { createInterface } from 'node:readline';
 import { HydraClient } from '../hydra/client.js';
 import { buildGraph, type BuiltGraph } from '../cordon/pipeline.js';
 import { FactIndex, PermissionOracle, retrieve } from '../cordon/query.js';
+import { DisclosureLedger, plan as planDisclosure, protectedClaims } from '../cordon/planner.js';
+import type { FactNode } from '../cordon/model.js';
 
 const PROTOCOL_VERSION = '2024-11-05';
 
@@ -44,6 +46,17 @@ let built: BuiltGraph | null = null;
 let index: FactIndex | null = null;
 let oracle: PermissionOracle | null = null;
 let ready: Promise<void> | null = null;
+
+/**
+ * Requirements and per-principal ledgers, for the set-level tool.
+ *
+ * An agent is the hardest caller to defend against, because it will happily ask
+ * forty questions in a row and stitch the answers together. That is exactly the
+ * accumulation the ledger exists to bound, so the MCP surface is the one place
+ * session tracking matters most rather than least.
+ */
+const requiredByFact = new Map<string, readonly string[]>();
+const ledgers = new Map<string, DisclosureLedger>();
 
 /** Everything logs to stderr: stdout is the protocol channel. */
 function log(message: string) {
@@ -68,6 +81,17 @@ async function ensureReady(): Promise<void> {
     log(`ready: ${built.facts.length.toLocaleString()} facts`);
   })();
   return ready;
+}
+
+/** Resolve every requirement once; level-0 facts require exactly their own space. */
+async function resolveRequirements() {
+  if (!built || !oracle || requiredByFact.size > 0) return;
+  for (const fact of built.facts) {
+    requiredByFact.set(
+      fact.id,
+      fact.level === 0 ? fact.requiredSpaces : await oracle.requiredSpaces(fact.id),
+    );
+  }
 }
 
 const TOOLS = [
@@ -107,6 +131,35 @@ const TOOLS = [
           type: 'array',
           items: { type: 'string' },
           description: 'Fact ids present in the Cordon graph.',
+        },
+      },
+      required: ['principal', 'factIds'],
+    },
+  },
+  {
+    name: 'plan_disclosure',
+    description:
+      'Gate a whole answer, not one fact at a time. Returns the largest subset ' +
+      'of your candidates that is safe to serve, where "safe" means the ' +
+      'disclosed SET cannot re-derive any claim this principal was refused. ' +
+      'Every fact in a reply can be individually admissible while the reply as ' +
+      'a whole leaks - check_admissible cannot see that; this can. With ' +
+      'session=true the check also covers everything this principal has already ' +
+      'been shown, because per-query safety does not compose.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        principal: { type: 'string' },
+        factIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Candidate fact ids, best first. Rank order is respected.',
+        },
+        session: {
+          type: 'boolean',
+          description:
+            'Evaluate against this principal\'s accumulated disclosure history. ' +
+            'Defaults to true: an agent asking repeatedly is the threat this bounds.',
         },
       },
       required: ['principal', 'factIds'],
@@ -184,6 +237,55 @@ async function callTool(name: string, args: Record<string, unknown>) {
     }
 
     return { principal, permitted: [...permitted], admitted, withheld };
+  }
+
+  if (name === 'plan_disclosure') {
+    const principal = String(args.principal ?? '');
+    const factIds = Array.isArray(args.factIds) ? args.factIds.map(String) : [];
+    const session = args.session !== false;
+
+    await resolveRequirements();
+    const permitted = new Set(await oracle.permittedSpaces(principal));
+    const known = new Map(built.facts.map((f) => [f.id, f]));
+
+    const candidates = factIds.map((id) => known.get(id)).filter((f): f is FactNode => !!f);
+    const unknown = factIds.filter((id) => !known.has(id));
+
+    let ledger: DisclosureLedger | undefined;
+    if (session) {
+      ledger = ledgers.get(principal) ?? new DisclosureLedger();
+      ledgers.set(principal, ledger);
+    }
+
+    const result = planDisclosure({
+      candidates,
+      requiredByFact,
+      permitted,
+      protectedSet: protectedClaims(built.facts, requiredByFact, permitted),
+      ...(ledger ? { ledger } : {}),
+    });
+    if (ledger) ledger.record(result.disclosed);
+
+    return {
+      principal,
+      safe: result.safe,
+      disclosed: result.disclosed.map((f) => ({ id: f.id, text: f.text })),
+      /* Refused outright: no provenance. */
+      inadmissible: result.inadmissible.map((f) => f.id),
+      /*
+       * Admissible and withheld anyway. Naming the claim it would have
+       * completed is deliberate: an agent that cannot see *why* it lost
+       * evidence will retry the same query forever.
+       */
+      suppressed: result.suppressed.map((sup) => ({
+        id: sup.fact.id,
+        wouldComplete: sup.wouldComplete,
+      })),
+      stats: result.stats,
+      /* Fail closed on ids we cannot evaluate. */
+      unknown,
+      ...(ledger ? { ledger: { size: ledger.size, queries: ledger.queryCount } } : {}),
+    };
   }
 
   throw new Error(`unknown tool: ${name}`);

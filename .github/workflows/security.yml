@@ -1,0 +1,93 @@
+# The security properties, on every commit.
+#
+# Ten audits produce ten documents, and nobody reads ten documents before
+# merging. `npm run report` reduces them to one question - is this build still
+# safe? - and exits non-zero when it is not.
+#
+# Deliberately two jobs rather than one. The tests need no engine, no corpus and
+# no network, so they run in seconds on every push and are the gate people
+# actually feel. The audits need the 28MB corpus and several minutes, so they
+# run on a schedule and on demand.
+
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, so a stale artifact surfaces even when nobody is committing.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  invariants:
+    name: invariants and report card
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # 58 tests: property-based soundness, brute-forced cut optimality,
+      # planner safety, hash-chain tamper detection. No engine required.
+      - name: Security invariants
+        run: npm test
+
+      # Gates every published security property against the committed
+      # artifacts, and fails the build when one stops holding.
+      - name: Security report card
+        run: npm run report
+
+  audits:
+    name: reproduce the published numbers
+    runs-on: ubuntu-latest
+    # Only where it is worth several minutes: the corpus fetch and four audits.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch the corpus
+        run: bash scripts/fetch-herb.sh
+
+      # These need no graph engine: requirements are recomputed from the corpus
+      # by traversal, which is the independent derivation the main audit already
+      # checks the graph against.
+      - name: Inference audit
+        run: npm run audit:inference
+
+      - name: Planner audit
+        run: npm run audit:planner
+
+      - name: Policy audit
+        run: npm run audit:policy
+
+      # Replays a committed response cache, so it reproduces with no API key.
+      - name: LLM adversary
+        run: npm run audit:llm
+
+      - name: Report card on the fresh artifacts
+        run: npm run report
+
+      # The artifacts are the evidence. If a scheduled run changes a number,
+      # that is exactly what someone needs to see.
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cordon-artifacts
+          path: artifacts/

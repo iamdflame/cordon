@@ -1,0 +1,67 @@
+{
+  "provenance": {
+    "gitSha": "9e3fc8073ba592b5b8e9774c4e13a4e53b4db3ea",
+    "gitDirty": true,
+    "generatedAt": "2026-08-20T23:37:32.066Z",
+    "node": "v22.14.0",
+    "seed": 20260820,
+    "corpus": {
+      "root": "data/herb",
+      "digest": "9268e8dabe619e7197025af0f92af7242e2002ff6db5026c78b31bb601ca2240",
+      "files": 34,
+      "bytes": 28927691
+    }
+  },
+  "roundTrip": {
+    "principals": 530,
+    "grants": 1370,
+    "drift": 0
+  },
+  "grants": {
+    "simulated": 150,
+    "documentsDisclosed": 713882,
+    "derivedDisclosed": 380,
+    "unlockedByCombination": 380,
+    "withDerived": 4,
+    "withCombination": 4,
+    "medianDerivedPerDocument": 0,
+    "meanDerivedPerUnlockingGrant": 95,
+    "combinationSharePct": 100
+  },
+  "secondOrder": {
+    "analysed": 30,
+    "claimsMadeRebuildable": 18
+  },
+  "widest": [
+    {
+      "space": "ForecastForce",
+      "documents": 5607,
+      "derived": 231,
+      "combination": 231
+    },
+    {
+      "space": "FlowForce",
+      "documents": 4650,
+      "derived": 81,
+      "combination": 81
+    },
+    {
+      "space": "ProposalForce",
+      "documents": 5430,
+      "derived": 66,
+      "combination": 66
+    },
+    {
+      "space": "VizForce",
+      "documents": 4730,
+      "derived": 0,
+      "combination": 0
+    },
+    {
+      "space": "PersonalizeForce",
+      "documents": 5046,
+      "derived": 0,
+      "combination": 0
+    }
+  ]
+}

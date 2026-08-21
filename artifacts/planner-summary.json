@@ -1,0 +1,320 @@
+{
+  "provenance": {
+    "gitSha": "9e3fc8073ba592b5b8e9774c4e13a4e53b4db3ea",
+    "gitDirty": true,
+    "generatedAt": "2026-08-21T00:11:11.855Z",
+    "node": "v22.14.0",
+    "seed": 20260820,
+    "corpus": {
+      "root": "data/herb",
+      "digest": "9268e8dabe619e7197025af0f92af7242e2002ff6db5026c78b31bb601ca2240",
+      "files": 34,
+      "bytes": 28927691
+    }
+  },
+  "config": {
+    "topK": 20,
+    "principals": 40,
+    "sessionLength": 30,
+    "facts": 56924
+  },
+  "perQuery": {
+    "queries": 1200,
+    "constraintBound": 0,
+    "boundShare": 0,
+    "violationsPrevented": 0,
+    "retentionPct": 100,
+    "costPct": 0,
+    "verifiedSafe": 1200,
+    "unsafe": 0
+  },
+  "session": {
+    "length": 30,
+    "unsafe": 0,
+    "curve": [
+      {
+        "query": 1,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 4,
+        "admissible": 160,
+        "disclosed": 160
+      },
+      {
+        "query": 2,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 4,
+        "admissible": 160,
+        "disclosed": 160
+      },
+      {
+        "query": 3,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 7,
+        "admissible": 280,
+        "disclosed": 280
+      },
+      {
+        "query": 4,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 13,
+        "admissible": 520,
+        "disclosed": 520
+      },
+      {
+        "query": 5,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 14,
+        "admissible": 560,
+        "disclosed": 560
+      },
+      {
+        "query": 6,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 17,
+        "admissible": 680,
+        "disclosed": 680
+      },
+      {
+        "query": 7,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 17,
+        "admissible": 800,
+        "disclosed": 800
+      },
+      {
+        "query": 8,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 21,
+        "admissible": 960,
+        "disclosed": 960
+      },
+      {
+        "query": 9,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 22,
+        "admissible": 1000,
+        "disclosed": 1000
+      },
+      {
+        "query": 10,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 28,
+        "admissible": 1240,
+        "disclosed": 1240
+      },
+      {
+        "query": 11,
+        "retention": 100,
+        "bound": 0,
+        "ledger": 32,
+        "admissible": 1400,
+        "disclosed": 1400
+      },
+      {
+        "query": 12,
+        "retention": 97.36842105263158,
+        "bound": 40,
+        "ledger": 34,
+        "admissible": 1520,
+        "disclosed": 1480
+      },
+      {
+        "query": 13,
+        "retention": 95,
+        "bound": 80,
+        "ledger": 35,
+        "admissible": 1600,
+        "disclosed": 1520
+      },
+      {
+        "query": 14,
+        "retention": 92.85714285714286,
+        "bound": 120,
+        "ledger": 35,
+        "admissible": 1680,
+        "disclosed": 1560
+      },
+      {
+        "query": 15,
+        "retention": 93.33333333333333,
+        "bound": 120,
+        "ledger": 35,
+        "admissible": 1800,
+        "disclosed": 1680
+      },
+      {
+        "query": 16,
+        "retention": 93.75,
+        "bound": 120,
+        "ledger": 38,
+        "admissible": 1920,
+        "disclosed": 1800
+      },
+      {
+        "query": 17,
+        "retention": 93.75,
+        "bound": 120,
+        "ledger": 38,
+        "admissible": 1920,
+        "disclosed": 1800
+      },
+      {
+        "query": 18,
+        "retention": 93.75,
+        "bound": 120,
+        "ledger": 38,
+        "admissible": 1920,
+        "disclosed": 1800
+      },
+      {
+        "query": 19,
+        "retention": 92.15686274509804,
+        "bound": 160,
+        "ledger": 40,
+        "admissible": 2040,
+        "disclosed": 1880
+      },
+      {
+        "query": 20,
+        "retention": 92.45283018867924,
+        "bound": 160,
+        "ledger": 42,
+        "admissible": 2120,
+        "disclosed": 1960
+      },
+      {
+        "query": 21,
+        "retention": 92.72727272727272,
+        "bound": 160,
+        "ledger": 42,
+        "admissible": 2200,
+        "disclosed": 2040
+      },
+      {
+        "query": 22,
+        "retention": 92.98245614035088,
+        "bound": 160,
+        "ledger": 43,
+        "admissible": 2280,
+        "disclosed": 2120
+      },
+      {
+        "query": 23,
+        "retention": 79.16666666666666,
+        "bound": 200,
+        "ledger": 47,
+        "admissible": 2880,
+        "disclosed": 2280
+      },
+      {
+        "query": 24,
+        "retention": 79.16666666666666,
+        "bound": 200,
+        "ledger": 47,
+        "admissible": 2880,
+        "disclosed": 2280
+      },
+      {
+        "query": 25,
+        "retention": 80,
+        "bound": 200,
+        "ledger": 47,
+        "admissible": 3000,
+        "disclosed": 2400
+      },
+      {
+        "query": 26,
+        "retention": 79.48717948717949,
+        "bound": 240,
+        "ledger": 49,
+        "admissible": 3120,
+        "disclosed": 2480
+      },
+      {
+        "query": 27,
+        "retention": 80.24691358024691,
+        "bound": 240,
+        "ledger": 49,
+        "admissible": 3240,
+        "disclosed": 2600
+      },
+      {
+        "query": 28,
+        "retention": 80.72289156626506,
+        "bound": 240,
+        "ledger": 49,
+        "admissible": 3320,
+        "disclosed": 2680
+      },
+      {
+        "query": 29,
+        "retention": 81.3953488372093,
+        "bound": 240,
+        "ledger": 49,
+        "admissible": 3440,
+        "disclosed": 2800
+      },
+      {
+        "query": 30,
+        "retention": 80.68181818181817,
+        "bound": 280,
+        "ledger": 50,
+        "admissible": 3520,
+        "disclosed": 2840
+      }
+    ],
+    "finalRetentionPct": 80.682
+  },
+  "sweep": [
+    {
+      "k": 10,
+      "queries": 240,
+      "bound": 0,
+      "prevented": 0,
+      "retention": 100
+    },
+    {
+      "k": 20,
+      "queries": 240,
+      "bound": 0,
+      "prevented": 0,
+      "retention": 100
+    },
+    {
+      "k": 50,
+      "queries": 240,
+      "bound": 12,
+      "prevented": 60,
+      "retention": 97.63779527559055
+    },
+    {
+      "k": 100,
+      "queries": 240,
+      "bound": 60,
+      "prevented": 144,
+      "retention": 96.1977186311787
+    },
+    {
+      "k": 200,
+      "queries": 240,
+      "bound": 192,
+      "prevented": 504,
+      "retention": 88.75968992248062
+    }
+  ],
+  "comparison": {
+    "globalCostPct": 37.727,
+    "perQueryCostPct": 0,
+    "sessionEndCostPct": 19.318
+  }
+}

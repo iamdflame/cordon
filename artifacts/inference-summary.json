@@ -1,0 +1,53 @@
+{
+  "provenance": {
+    "gitSha": "9e3fc8073ba592b5b8e9774c4e13a4e53b4db3ea",
+    "gitDirty": true,
+    "generatedAt": "2026-08-21T00:06:19.754Z",
+    "node": "v22.14.0",
+    "seed": 0,
+    "corpus": {
+      "root": "data/herb",
+      "digest": "9268e8dabe619e7197025af0f92af7242e2002ff6db5026c78b31bb601ca2240",
+      "files": 34,
+      "bytes": 28927691
+    }
+  },
+  "scope": {
+    "principals": 200,
+    "facts": 56924,
+    "derivedFacts": 623
+  },
+  "denials": {
+    "total": 120206,
+    "phantom": 1208,
+    "effective": 118998,
+    "phantomShare": 1.005
+  },
+  "byDepth": [
+    {
+      "level": 1,
+      "denied": 96206,
+      "phantom": 0,
+      "share": 0
+    },
+    {
+      "level": 2,
+      "denied": 12000,
+      "phantom": 804,
+      "share": 6.7
+    },
+    {
+      "level": 3,
+      "denied": 12000,
+      "phantom": 404,
+      "share": 3.367
+    }
+  ],
+  "cut": {
+    "finite": 1208,
+    "verified": 400,
+    "verifyAttempted": 400,
+    "meanFactsCut": 1540.25,
+    "evidenceWithheldPct": 37.727
+  }
+}

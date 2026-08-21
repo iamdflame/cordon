@@ -356,3 +356,213 @@ button { font-family: inherit; font-size: inherit; color: inherit; background: n
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ============================================================================
+   Operator views
+
+   The Ask view is a reading surface and stays typographic. These two are
+   reference surfaces - an operator scans them for outliers rather than reading
+   them - so they are denser, tabular, and quiet until something is wrong.
+   ========================================================================== */
+
+.nav {
+  display: flex;
+  gap: 2px;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+
+.nav-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 11px 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.16s var(--spring), border-color 0.16s var(--spring);
+}
+
+.nav-tab:hover { color: var(--text-2); }
+
+.nav-tab.is-active {
+  color: var(--text);
+  border-bottom-color: var(--trace);
+}
+
+.view-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 22px 26px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ------------------------------------------------------------------- stats */
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+.stat { min-width: 120px; }
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.is-warn { color: var(--trace); }
+
+.stat-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+.stat-hint {
+  font-size: 10.5px;
+  color: var(--text-4);
+  margin-top: 3px;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.grid th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  padding: 0 12px 8px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.grid th.num, .grid td.num { text-align: right; padding-right: 16px; }
+
+.grid td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--text-2);
+}
+
+.grid tbody tr:hover td { background: rgba(255, 255, 255, 0.014); }
+
+.cell-text {
+  color: var(--text-2);
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+/* The audience count. Zero is not a success - it is knowledge nobody can use. */
+.pill {
+  display: inline-block;
+  min-width: 26px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--raised);
+  border: 1px solid var(--line-bright);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill-deny {
+  background: var(--deny-soft);
+  border-color: rgba(229, 72, 77, 0.4);
+  color: #ff8f92;
+}
+
+.set-tight { gap: 3px; }
+
+.chip-more {
+  color: var(--text-4);
+  border-style: dashed;
+}
+
+/* ------------------------------------------------------------------ meters */
+
+.meter {
+  display: inline-block;
+  width: 130px;
+  height: 5px;
+  background: var(--raised);
+  border-radius: 999px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  background: var(--trace);
+  border-radius: 999px;
+}
+
+.meter-label {
+  font-size: 10.5px;
+  color: var(--text-3);
+  margin-left: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ ledger */
+
+.ledger-explain {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 640px;
+}
+
+.ledger-step {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 12px;
+  align-items: start;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.ledger-step strong { color: var(--text); font-weight: 600; }
+
+.ledger-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--grant);
+  margin-top: 6px;
+}
+
+.ledger-dot.is-warn { background: var(--trace); }
+.ledger-dot.is-deny { background: var(--deny); }
+
+/* The shell is hidden rather than unmounted, so Ask keeps its state. */
+.shell[hidden] { display: none; }

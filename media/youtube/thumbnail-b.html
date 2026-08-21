@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1280px; height:720px; overflow:hidden; }
+  body {
+    background:#08090b; color:#e9ecf1;
+    font-family:'Space Grotesk',sans-serif; position:relative;
+  }
+  .grid {
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.026) 1px, transparent 1px);
+    background-size:64px 64px;
+  }
+  .glow {
+    position:absolute; left:50%; top:-280px; transform:translateX(-50%);
+    width:1000px; height:900px; border-radius:50%;
+    background:radial-gradient(circle, rgba(229,72,77,.14) 0%, rgba(229,72,77,0) 62%);
+  }
+  .wrap {
+    position:relative; height:100%; padding:46px 72px 52px;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .top { display:flex; justify-content:space-between; align-items:baseline; }
+  .eyebrow {
+    font-family:'JetBrains Mono',monospace; font-size:19px; letter-spacing:.19em;
+    text-transform:uppercase; color:#ffc95c; font-weight:600;
+  }
+  .badge {
+    font-family:'JetBrains Mono',monospace; font-size:15px; letter-spacing:.1em;
+    text-transform:uppercase; color:#5d6675;
+  }
+
+  .mid { text-align:center; }
+  .huge {
+    font-size:176px; line-height:.88; font-weight:700; letter-spacing:-.045em;
+    color:#e5484d; font-family:'Space Grotesk',sans-serif;
+  }
+  .under {
+    font-size:47px; font-weight:600; letter-spacing:-.02em; margin-top:14px; color:#e9ecf1;
+  }
+  .sub { font-size:26px; color:#98a1af; margin-top:16px; font-weight:500; }
+  .sub b { color:#ffc95c; font-weight:600; }
+
+  .strip {
+    display:flex; gap:0; border:1px solid #232a34; border-radius:10px; overflow:hidden;
+    background:#0d0f13;
+  }
+  .cell { flex:1; padding:15px 20px; border-right:1px solid #1c222b; }
+  .cell:last-child { border-right:0; }
+  .cl {
+    font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.09em;
+    text-transform:uppercase; color:#5d6675; margin-bottom:8px;
+  }
+  .cv { font-family:'JetBrains Mono',monospace; font-size:25px; font-weight:600; color:#e9ecf1; }
+  .cv.good { color:#4ecb8d; }
+  .cv.warn { color:#ffc95c; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow"></div>
+  <div class="wrap">
+    <div class="top">
+      <div class="eyebrow">Cordon &middot; Hack Hydra 2026</div>
+      <div class="badge">Built on HydraDB</div>
+    </div>
+
+    <div class="mid">
+      <div class="huge">1,208</div>
+      <div class="under">refusals that protected nothing</div>
+      <div class="sub">We found them <b>in our own system</b> &mdash; and published the price.</div>
+    </div>
+
+    <div class="strip">
+      <div class="cell">
+        <div class="cl">Leaks, 18,168 trials</div>
+        <div class="cv good">0</div>
+      </div>
+      <div class="cell">
+        <div class="cl">Cost of that</div>
+        <div class="cv good">0.000 F1</div>
+      </div>
+      <div class="cell">
+        <div class="cl">Cost of the rest</div>
+        <div class="cv warn">37.7%</div>
+      </div>
+      <div class="cell">
+        <div class="cl">Per answer</div>
+        <div class="cv good">free</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

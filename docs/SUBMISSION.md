@@ -1,29 +1,32 @@
-# Submission form — drafted answers
+# Hack Hydra 2026 submission — paste-ready answers
 
 For some judges this is read before the repository, so it is written to stand
-alone. Copy the fenced blocks verbatim.
+alone. Copy each fenced block into the matching form field.
 
 ---
 
-## Project name
+## Project Name
 
 ```
 Cordon
 ```
 
-## One-line description / tagline
-
-The same sentence appears in the repo description, README line one, the video's
-first eight seconds, and here. It has to survive into a deliberation nobody from
-the team is in the room for.
+## Project Description
 
 ```
-Derived knowledge inherits the access control of everything it was derived from.
+Cordon is a permission-propagating enterprise knowledge graph built on HydraDB.
+It prevents derived facts from laundering restricted source material by making
+every fact inherit the access requirements of everything it rests on, then
+enforcing those requirements through a live console, API, and MCP server.
+
+It also ships the measurement behind the product: a reproducible benchmark,
+soundness proof, exhaustive audits, and adversarial tests showing where
+document-level access control fails once an AI system begins to infer.
 ```
 
 ---
 
-## The problem
+## What problem are you solving?
 
 ```
 Every enterprise AI assistant filters what it retrieves by document
@@ -40,7 +43,7 @@ only on derived facts, so this is not a bug in anyone's implementation. It is
 the ceiling of the idea.
 ```
 
-## What we built
+## What did you build?
 
 ```
 A permission-propagating enterprise knowledge graph on HydraDB, plus the
@@ -63,50 +66,13 @@ Requirements come from traversal and are compared against a requirement
 recomputed independently from the corpus, because a security property checked
 against the field that produced it is not being checked at all.
 
-Three things beyond the headline:
-
-1. The baseline is not just wrong, it is arbitrary. A derived fact carries one
-   space, assigned by whichever source the writer reached first, and that is
-   what a document gate reads. On 1,008 of the 7,280 pairs it is supposed to
-   protect, its answer flips depending on that attribution. A security decision
-   settled by ingest order is not a security decision. Cordon's answer never
-   changes, because it never reads the attribution.
-
-2. The whole thing runs again over permissions we did not write. Eight real
-   GitHub repositories, five private and three public, fetched live. Only the
-   loader differs; extraction, resolution, derivation and the admissibility
-   rule are the same code. For every source under a withheld fact the audit
-   issues an unauthenticated request and asserts the refusal: 26/26 return 404.
-   The organisation has 11 nested teams as principals, and a GitHub team is a
-   principal in GitHub's own permission model, so the hierarchy is real access
-   structure rather than an org chart we drew. The test oracle is GitHub's
-   server, not our model of it.
-
-4. We found an aggregation leak in our own system and shipped the fix with its
-   cost. Two facts a principal is entitled to can determine a third they are
-   not; document-level filtering cannot express this at all. We proved that an
-   attacker cannot climb the derivation edges, proved that Cordon is closed
-   under aggregation exactly when the corpus has "claim locality", then measured
-   the premise instead of assuming it. On a fixture with realistic
-   cross-repository references, Cordon leaked 16 of 130 denied pairs. Widening
-   the requirement to include spaces a fact *names* takes that to 0, at a cost
-   of 54 additional withholdings. Both rules ship with their numbers.
-
-3. We measured the channels we did not close. Compositional inference — whether
-   permitted answers jointly reconstruct a denied one — and the refusal side
-   channel our own defence opens, quantified in bits, with an
-   indistinguishable-abstention mode that closes it and a plain statement of
-   what that costs. A security claim that names only the channel it closed is a
-   result, not a threat model.
-
-Also shipped: a soundness proof by induction with its scope stated, a
-property-based test that cannot pass vacuously, a standalone /v1/admissible
-endpoint and MCP server so any existing RAG stack can call the gate, and DKL —
-the derived-knowledge leakage benchmark — packaged so anyone can measure their
-own graph.
+The product includes a derivation-chain inspector for 13 real GitHub team
+principals, three selectable gates, a standalone /v1/admissible endpoint, an MCP
+server that existing RAG stacks can call, and DKL, a packaged benchmark for
+measuring derived-knowledge leakage in another graph.
 ```
 
-## How it uses HydraDB
+## How does your project use HydraDB?
 
 Be specific here. Vagueness reads as a wrapper.
 
@@ -153,25 +119,55 @@ The first is a correctness bug in an authorisation path, and finding it is the
 most useful thing this project can hand back to the HydraDB team.
 ```
 
-## Repository
+## Tech Stack
 
 ```
-https://github.com/iamdflame/cordon
+TypeScript, Node.js 20, Fastify, React, Vite, HydraDB HTTP/OpenCypher API,
+Docker Compose, Zod, undici, GitHub API, Node test runner, and OpenAI API
+(optional, for the cached LLM adversary evaluation).
 ```
 
-## Live demo
+## Deployed Project URL
 
 ```
 https://cordon-graph.vercel.app
 ```
 
-Console (13 real GitHub team principals, three gates, derivation chains):
-`https://cordon-graph.vercel.app/console`
-
-## Demo video
+## Public GitHub Repository URL
 
 ```
-<paste the URL once uploaded — verify it plays logged-out before submitting>
+https://github.com/iamdflame/cordon
+```
+
+## 3-Minute Pitch + Demo Video
+
+```
+https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n
+```
+
+## Anything else the judges should know?
+
+```
+The headline result is exhaustive, not sampled: Cordon has 0 violations over
+all 330,190 (fact, principal) pairs while preserving answer F1 with 0 false
+denials. The same pipeline also runs over permissions we did not invent: eight
+real GitHub repositories, five private and three public, with 11 nested teams.
+For every source beneath a withheld fact, the audit makes an unauthenticated
+request and verifies GitHub's refusal; all 26 return 404.
+
+We also attacked the boundary of our own proof. On a cross-repository fixture,
+per-fact provenance control still allowed 16 of 130 denied facts to be rebuilt
+by aggregation. Cordon ships the stronger named-space policy that reduces that
+to 0, reports its cost of 54 additional withholdings, and includes a
+disclosure-ledger planner for compositional inference across repeated queries.
+The repository states these limitations rather than folding them into the
+headline security claim.
+
+Finally, using HydraDB exposed a silent 1,024-row truncation in an authorization
+query. We added a fail-closed client guard and filed three reproducible upstream
+issues: hydra-db/hydradb#115, #116, and #117. A clean checkout runs with
+`docker compose up`; the live console is at
+https://cordon-graph.vercel.app/console.
 ```
 
 ---

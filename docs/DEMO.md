@@ -2,6 +2,8 @@
 
 Three minutes hard. Anything past the mark may not be reviewed.
 
+**Published video:** [Watch the pitch and demo](https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n)
+
 The whole video is one idea: **a fact derived from three documents is not a
 document, so document-level access control has no answer for it.** Everything
 else is setup or proof.
@@ -17,35 +19,45 @@ There are four parts to this document:
 
 ## 0. Before you start
 
-You no longer need to run anything locally for the console — it is hosted, live,
-and backed by a real HydraDB instance. You only need a terminal for the audits.
+Three minutes hard. The whole video is one arc, and it is not the arc most
+security demos run:
 
-Open these and leave them open, each in its own window:
+> We found a hole. We closed it and proved it. **Then we attacked our own
+> proof, found it did not cover what it looked like it covered, and published
+> the price of fixing that.**
+
+Almost nobody does the third beat. It is the reason to watch.
+
+Open these, each in its own window:
 
 | Window | What | Why |
 |---|---|---|
-| A | [cordon-graph.vercel.app/console](https://cordon-graph.vercel.app/console) | the console — wait for the green **Live** badge |
-| B | Terminal, in the project folder | for `npm run attack` and `npm run audit:github` |
-| C | [docs/RESULTS.md](https://github.com/iamdflame/cordon/blob/main/docs/RESULTS.md) on GitHub | the numbers |
-| D | Firefox/Chrome, **private/incognito window** | for the 404 |
+| A | Terminal, project folder, **big font** | the audits. This is most of the video. |
+| B | [cordon-graph.vercel.app/console](https://cordon-graph.vercel.app/console) | the console — wait for the green **Live** badge |
+| C | [docs/INFERENCE.md](https://github.com/iamdflame/cordon/blob/main/docs/INFERENCE.md) | for the phantom-denial table |
+| D | Browser, **private/incognito**, logged out of GitHub | for the 404 |
 
-Two things to check before you record:
-
-**Window A must show the green "Live" badge.** If it says "Verified transcript",
-the backend container is cold — reload once and give it fifteen seconds. The
-transcript is honest, but "live" is a stronger thing to film.
-
-**Window D must be a private window, logged out of GitHub.** That is what makes
-the 404 real rather than staged.
-
-The terminal needs HydraDB and the GitHub snapshot, which need no credentials:
+Get the machine ready first — **one command, then leave it alone for about
+fifteen minutes**:
 
 ```bash
-npm run hydra:up
+npm run demo:prep
 ```
 
-Do a dry run of every click before you record anything. You want to be bored by
-the time you hit record.
+It starts HydraDB, runs every audit once so they are warm, starts the API, and
+prints a checklist. Cold, `npm run audit:inference` spends two minutes drawing a
+progress bar before it prints anything; warm, it answers in seconds. Recording
+cold is the single most common way this goes wrong.
+
+Then, in a second terminal, start the console and leave it running:
+
+```bash
+cd web && npm run dev        # http://localhost:5173
+```
+
+Full step-by-step recording instructions — OBS setup, screen prep, and exactly
+what to type and click for each of the eight shots — are in
+[section 3](#3-recording).
 
 ---
 
@@ -53,84 +65,142 @@ the time you hit record.
 
 Total: about 2 minutes 50 of speech. Timings are where each block *starts*.
 
-**The demo must start by 0:40.** Everything before it is setup, and setup is not
-what wins. The aggregation attack is the peak, not the preamble.
+**The turn must land by 0:40.** Everything before it is setup, and setup is not
+what wins.
 
 Copy each block into ElevenLabs **separately** — one generation per block, so a
 bad take costs you one block and not three minutes.
 
-Numbers are spelled out on purpose. Text-to-speech reads "17.4%" as "seventeen
-point four percent" only if it feels like it; spelled out, it always does.
+### Block 1 — 0:00 to 0:18 · the hole
 
-### Block 1 — 0:00 to 0:20 · the problem, concretely
+*Film: the console, one derived fact expanded showing its derivation.*
 
 > A fact inferred from three documents is not a document. It has no access
-> control list of its own.
+> control of its own.
 >
-> Every enterprise AI assistant filters by document permissions... so when the
-> assistant *infers* something, nothing is checking whether you were allowed to
-> learn it.
+> So document-level filtering — which is what every enterprise AI assistant
+> ships today — has no answer for it. Move a company onto a knowledge graph and
+> you create an access-control problem that did not exist before. The graph gets
+> unsafe exactly when it gets useful.
 
-### Block 2 — 0:20 to 0:40 · the stake
+### Block 2 — 0:18 to 0:38 · we closed it, and it was free
 
-> We measured this on fifteen hundred enterprise questions across twelve
-> principals. Eighteen thousand trials.
+*Film: the console — ask as one person, switch to another, watch facts redact.*
+
+> Cordon's rule: a derived fact requires every space it was built from. Union on
+> the requirement side is intersection on the audience side.
 >
-> Document-level filtering — which is what ships today — leaked facts on
-> seventeen point four percent of them. That is ten thousand six hundred and
-> seventeen facts handed to people not entitled to them.
-
-### Block 3 — 0:40 to 1:40 · the demo. **This is the video.**
-
-Run `npm run attack` on screen and let it print. Do not talk over the output;
-let it land, then narrate.
-
-> Here is the attack document-level filtering cannot defend against even in
-> principle.
+> Zero leaks across eighteen thousand trials. Proved by induction, checked over
+> three hundred and thirty thousand pairs. And identical answer quality to the
+> baseline — zero point zero nine nine on both.
 >
-> Two facts this person *is* entitled to. Together, they determine a third one
-> they are *not*. Nothing that was handed over was itself forbidden — and the
-> conclusion is reconstructed anyway.
->
-> Document-level filtering discloses it. Cordon refuses... and prints the
-> derivation that failed: the exact source, in the exact repository, that this
-> person has no path to.
->
-> Cordon never reads the attribution. It reads the derivation.
+> Eliminating every leak cost us nothing.
 
-### Block 4 — 1:40 to 2:05 · the number that matters
+### Block 3 — 0:38 to 1:20 · **the turn. This is the video.**
 
-> Zero leaks. Across eighteen thousand trials.
->
-> And here is the part we did not expect. Identical answer quality to the
-> baseline — zero point zero nine nine on both. Eliminating every leak cost us
-> nothing. No false denials, no lost answers.
->
-> Security here is not a trade against utility. It is free.
+*Film: `npm run audit:inference`. Let the phantom table land before you speak.*
 
-### Block 5 — 2:05 to 2:35 · HydraDB, and the credibility beat
-
-> This runs on the HydraDB open-source engine, over the HTTP query API.
-> Admissibility is a variable-length traversal that cannot be precomputed — with
-> n principals there are two-to-the-n visibility subsets — so it is walked, per
-> asker, at query time.
+> And then we asked the question a security reviewer asks next. When Cordon
+> refuses — does the asker end up not knowing?
 >
-> Building it, we probed what the OpenCypher subset actually supports, and found
+> Those are different questions. Our proof is about **provenance**: what the
+> system hands over. A reviewer cares about **content**: what you end up
+> knowing.
+>
+> Our derivation rules ship in this repository under Apache 2.0. An attacker
+> doesn't reverse-engineer them — they clone them. So we ran *our own rules*
+> over the facts we had disclosed.
+>
+> Twelve hundred and eight refusals were rebuilt in one step. They satisfy our
+> theorem perfectly and protect nothing.
+>
+> **A refusal the asker can undo is not a refusal.** It costs them an answer,
+> costs the operator a ticket, and shows up on a dashboard as protection. It is
+> a lie the system tells its owner.
+
+### Block 4 — 1:20 to 1:50 · the price, and why it is a cut
+
+*Film: scroll the depth table — depth 1 tight, depths 2 and 3 phantom.*
+
+> Depth one is tight — zero phantoms in ninety-six thousand. Depths two and
+> three are not, and the cause is a fix we were *right* to make: we raised a
+> requirement after traversal caught it understated. Correct for provenance.
+> Worth nothing for content.
+>
+> You cannot fix that by demanding more. The asker isn't at the front door —
+> they're rebuilding the claim from evidence they're entitled to. The only
+> defence is a **minimum cut**: withhold things they have every right to read.
+>
+> Thirty-seven point seven percent of an asker's legitimate evidence. That is
+> unshippable, and we published it anyway.
+
+### Block 5 — 1:50 to 2:25 · the number that makes it shippable
+
+*Film: `npm run audit:planner`, hold on the sweep table.*
+
+> Unless you stop deciding one fact at a time.
+>
+> That thirty-seven percent prices safety against an adversary who has
+> aggregated everything they're entitled to. Someone reading one answer is not
+> that adversary.
+>
+> So we decide over the **set**: the largest subset of your candidates whose
+> closure cannot rebuild anything the asker was refused.
+>
+> At production retrieval depth — top twenty — the constraint never fired once
+> across twelve hundred queries. It is free. It first bites at fifty. That is a
+> measured phase transition, not a claim.
+>
+> And because ten safe answers can jointly leak, there's a **ledger**. Safety
+> stops being yes-or-no and becomes a budget: a hundred percent at query one,
+> eighty at query thirty. You keep getting answers until your own history starts
+> to determine something you were refused.
+
+### Block 6 — 2:25 to 2:45 · the credibility beat
+
+*Film: `npm run audit:llm` output, then the HydraDB notes page.*
+
+> Every leak number we publish says "this is a lower bound, because our
+> adversary runs our rules." That's unfalsifiable as written, so we tested it —
+> we pointed a language model at the denials we'd called protected.
+>
+> It recovered nothing. And we can say *why*, with a number: zero of sixteen
+> thousand documents mention a product area other than their own. The channel
+> isn't there. That measures the corpus, not our defence — so the caveat stands
+> as untested, not disproved.
+>
+> This runs on HydraDB, over the open-source engine. Probing it, we found
 > queries silently truncating at one thousand and twenty-four rows with no
-> error. For a security system that means a quarter of an authorisation table
-> disappearing quietly. Our client fails closed on it. We filed it upstream.
-> That capability map is in the repository.
+> error — a quarter of an authorisation table disappearing quietly. Our client
+> fails closed. We filed it upstream.
 
-### Block 6 — 2:35 to 3:00 · the close
+### Block 7 — 2:45 to 3:00 · the close
 
-> Document filtering does not have a bug. It has a ceiling... and the ceiling is
+*Film: the README's two-property table.*
+
+> Document filtering doesn't have a bug. It has a ceiling, and the ceiling is
 > the first inference.
 >
-> Which means moving an enterprise onto a knowledge graph creates an
-> access-control problem that did not exist before. The graph gets unsafe
-> exactly when it gets useful.
+> Provenance confidentiality is free. Content confidentiality is not — and
+> anyone telling you otherwise has not measured it.
 >
-> That is what Cordon fixes. One command reproduces every number.
+> Every number here regenerates from one command. Including the ones that make
+> us look bad.
+
+---
+
+### Why this arc wins
+
+Most submissions show a thing working. The three beats almost nobody has:
+
+| beat | what it signals |
+|---|---|
+| **We attacked our own proof** | you understand the difference between a theorem and a guarantee |
+| **We published a number that says our fix is unshippable** | you are not selling |
+| **We tested our own hedge, and reported a null** | you know what evidence is |
+
+If you have to cut for time, cut Block 6 first and Block 2 second. **Never cut
+Block 3** — it is the reason the video exists.
 
 ---
 
@@ -217,11 +287,51 @@ reads as confidence.
 
 ## 3. Recording
 
-You are recording **pictures only**. No microphone. The voice comes from
-ElevenLabs and gets laid on top in editing. This is much easier than trying to
-talk and click at the same time, and it sounds better.
+**Read this once before you touch anything.** The whole section is written to be
+followed top to bottom without deciding anything.
 
-### Install OBS Studio
+You are recording **pictures only** — no microphone, no talking. The voice comes
+from ElevenLabs (section 2) and gets laid on top in editing. Trying to talk and
+click at the same time is much harder and sounds worse.
+
+---
+
+### Step 1 — Get the machine ready (do this once, ~15 minutes, unattended)
+
+Open a terminal in the project folder and run:
+
+```bash
+npm run demo:prep
+```
+
+This installs nothing and changes nothing in the repo. It:
+
+- checks Docker and Node are present
+- fetches the corpus if it is missing
+- starts HydraDB if it is not running
+- **runs all four audits once** so they are warm
+- starts the API on `localhost:8787`
+- prints a checklist when it is done
+
+**Why this matters more than anything else in this document.** Each audit builds
+the graph before it prints anything. Cold, `npm run audit:inference` spends about
+two minutes showing you a progress bar and *then* prints the numbers. Warm, it
+prints in seconds. If you record cold, every shot is mostly progress bar.
+
+Wait for it to say **"Everything is warm."** If it says anything failed, fix that
+before continuing — it will tell you which command to run by hand.
+
+Then start the console in a **second terminal** and leave it running:
+
+```bash
+cd web && npm run dev
+```
+
+That serves the console at <http://localhost:5173>.
+
+---
+
+### Step 2 — Install and configure OBS (once, ~10 minutes)
 
 ```bash
 sudo apt install obs-studio      # Ubuntu/Debian
@@ -229,140 +339,351 @@ sudo apt install obs-studio      # Ubuntu/Debian
 
 Or download from <https://obsproject.com>. It is free.
 
-### Set OBS up once
+**Open OBS.** If a setup wizard appears, choose **Optimise just for recording**.
 
-1. Open OBS. If a setup wizard appears, choose **Optimise just for recording**.
-2. **Settings** (bottom right) → **Video**:
-   - Base resolution: `1920x1080`
-   - Output resolution: `1920x1080`
-   - FPS: `30`
-3. **Settings** → **Output**:
-   - Output mode: `Simple`
-   - Recording quality: `High Quality, Medium File Size`
-   - Recording format: `MP4`
-   - Encoder: `Software (x264)` — pick hardware only if software stutters
-4. **Settings** → **Audio**: set **Mic/Auxiliary Audio** to `Disabled`. You do
-   not want your room in this video.
-5. Click **OK**.
+Then click **Settings** (bottom right) and set exactly these:
 
-### Add what you are filming
+| Tab | Setting | Value |
+|---|---|---|
+| **Video** | Base resolution | `1920x1080` |
+| **Video** | Output resolution | `1920x1080` |
+| **Video** | FPS | `30` |
+| **Output** | Output mode | `Simple` |
+| **Output** | Recording quality | `High Quality, Medium File Size` |
+| **Output** | Recording format | `MP4` |
+| **Output** | Encoder | `Software (x264)` |
+| **Audio** | Mic/Auxiliary Audio | **`Disabled`** |
 
-In the **Sources** box at the bottom, click **+**:
+Click **OK**.
 
-- Choose **Screen Capture (XSHM)** on Linux (or **Display Capture**).
-- Pick your monitor. Click **OK**.
+> Setting the mic to Disabled is not optional. If you leave it on you will
+> record your room, and you will not notice until editing.
 
-You should now see your screen inside OBS. (You will see infinite mirrors if OBS
-is on the screen you are capturing — that is normal, just move OBS to a second
-monitor or minimise it before recording.)
+**Now tell OBS what to film.** In the **Sources** box at the bottom, click the
+**+** button:
 
-### Make your screen look good
+1. Choose **Screen Capture (XSHM)** on Linux, or **Display Capture** on
+   Mac/Windows.
+2. Give it any name, click **OK**.
+3. Pick your monitor from the dropdown, click **OK**.
 
-Before you record anything:
-
-1. **Close everything you are not filming.** Slack, email, file manager,
-   everything. One stray notification ruins a take.
-2. Turn off notifications: **Settings → Notifications → Do Not Disturb**.
-3. In the browser: hide bookmarks (`Ctrl+Shift+B`), and use a clean profile with
-   no extra tabs.
-4. In the terminal: make the font big. `Ctrl+Shift++` five or six times. If a
-   judge has to squint, the shot failed. Use a dark theme.
-5. Set your desktop wallpaper to something plain and dark.
-
-### Take the six shots
-
-Record each one **separately**. Six short clips are far easier to edit than one
-long one, and if you fumble shot 4 you only redo shot 4.
-
-For each shot: press **Start Recording** in OBS, wait two seconds doing nothing,
-do the actions, wait two seconds doing nothing, press **Stop Recording**. Those
-two seconds of stillness at each end give you room to cut.
-
-OBS saves to `~/Videos` by default. Rename each file as soon as you record it.
+You should now see your own screen inside the OBS preview. If you see infinite
+nested screens, that is normal — it happens because OBS is on the screen it is
+filming. Move OBS to a second monitor, or just minimise it before each take.
 
 ---
 
-**Shot 1 — `shot1-console.mp4`** (needs ~25 seconds)
+### Step 3 — Make the screen look good (5 minutes, do it properly)
 
-Window A, the console, sitting still. Slowly scroll down the page once and back
-up. That is all. This is wallpaper under Block 1.
+This is the difference between "a student project" and "a product". Judges
+notice.
 
-**Shot 2 — `shot2-attack.mp4`** (needs ~65 seconds — this is the one that matters)
+1. **Close everything you are not filming.** Slack, email, file manager, music,
+   every browser tab except the console. One notification popup ruins a take.
+2. **Turn on Do Not Disturb.** Settings → Notifications → Do Not Disturb.
+3. **In the browser:** hide the bookmarks bar with `Ctrl+Shift+B`. Close every
+   tab except the console.
+4. **In the terminal — this one matters most.** Press `Ctrl+Shift++` (plus)
+   **six times**. The text should look uncomfortably large to you. It will look
+   correct in a 1080p video played in a small window.
+5. **Make the terminal window tall** — drag it to fill the screen vertically.
+   The audits print 30–40 lines and you want them on one screen without
+   scrolling.
+6. **Use a dark terminal theme** and a plain dark desktop wallpaper.
 
-Window B, the terminal, cleared (`clear`). Type:
+Quick check: stand up, take two steps back from your monitor, and look at the
+terminal. If you cannot comfortably read it, go bigger.
 
+---
+
+### Step 4 — Learn the recording rhythm (2 minutes)
+
+Every single shot follows the same five beats. Do not vary it.
+
+1. Click **Start Recording** in OBS.
+2. **Wait 2 seconds doing absolutely nothing.** Hands off the keyboard.
+3. Do the actions for that shot.
+4. **Wait 2 seconds doing absolutely nothing** after the last thing happens.
+5. Click **Stop Recording**.
+
+Those two seconds of stillness at each end are what let you cut cleanly in
+editing. Without them every cut lands mid-motion and looks like a glitch.
+
+**Record each shot as its own file.** Eight short clips are far easier to edit
+than one long take, and if you fumble shot 5 you only redo shot 5.
+
+OBS saves to `~/Videos` by default. **Rename each file the moment you stop
+recording** — you will not remember which was which ten minutes later.
+
+**Do a full dry run of every shot before you record anything.** Type the
+commands, click the clicks, with OBS closed. You want to be bored by the time
+you press record.
+
+---
+
+### Step 5 — Take the eight shots
+
+Each shot below gives you: which window, what to type, what you should see on
+screen, and how long it needs to be.
+
+---
+
+#### Shot 1 → `shot1-console-derivation.mp4` · ~25 seconds · covers Block 1
+
+**Window:** the console at <http://localhost:5173>, **Ask** tab.
+
+**Do exactly this:**
+
+1. In the **left panel**, click **`@cordon-demo/billing`**.
+2. Click the question box and type exactly:
+
+   ```
+   priya raman
+   ```
+
+3. Press **Ask**. Wait for the answer to render.
+4. You will get **7 readable facts and 10 struck-out ones.** Scroll the results
+   until you find the struck-out fact that begins:
+
+   > *Priya Raman (mentioned) is active across 5 product areas…*
+
+5. **Click that fact.** The permission trace opens on the right.
+6. **Hold still for five seconds.** Do not scroll, do not move the mouse.
+
+**You should see** in the right panel:
+
+| | |
+|---|---|
+| required (by traversal) | **5** spaces |
+| the asker holds | 5 spaces, 3 of which are the wrong ones |
+| missing | `cordon-demo-fornax`, `cordon-demo-borealis`, `cordon-demo-cygnus` |
+| rests on | **5 supports, all of them other facts** — no source at all |
+
+**Why this shot is first.** That fact is not in any document. No file contains
+the sentence "Priya Raman is active across 5 product areas" — it was derived,
+and it needs all five of those areas to read. "Rests on 5 facts, zero sources"
+is the entire argument in one panel.
+
+---
+
+#### Shot 2 → `shot2-console-switch.mp4` · ~25 seconds · covers Block 2
+
+**Window:** the console, same **Ask** tab. Same question throughout — **do not
+retype it between askers.**
+
+**Do exactly this:**
+
+1. In the left panel, click **`@cordon-demo/leadership`**.
+2. Type exactly:
+
+   ```
+   priya raman
+   ```
+
+3. Press **Ask**. You get **8 readable facts, nothing struck out.**
+4. **Pause for three seconds** so the clean result registers on camera.
+5. Now, in the left panel, click **`Anonymous (the internet)`**.
+6. Press **Ask** again — the same question is still in the box.
+7. **Hold for five seconds** on the result.
+
+**You should see:**
+
+| asker | readable | withheld |
+|---|---|---|
+| `@cordon-demo/leadership` | **8** | **0** |
+| `Anonymous (the internet)` | **4** | **10** |
+
+Half the answer disappears, and the derived fact from shot 1 is among what goes.
+
+**Do this slowly.** It is the "watch the boundary move" shot, and it is worth
+nothing if it happens faster than a viewer can follow. Leave a real beat between
+the two asks.
+
+> **If you want a second take with a different pair:** `@cordon-demo/billing`
+> (7 readable / 10 withheld) against `@cordon-demo/sdk` (4 / 10) works on the
+> same question. The leadership → anonymous version is more dramatic, because
+> "Anonymous (the internet)" needs no explaining.
+
+---
+
+#### Shot 3 → `shot3-inference.mp4` · ~40 seconds · covers Block 3 · **THE MONEY SHOT**
+
+**Window:** terminal A, big font.
+
+**Type:**
 ```bash
-npm run attack
+npm run audit:inference
 ```
 
-Press Enter. Let it print completely. Do not scroll while it prints. When it
-finishes, wait three seconds, then slowly scroll up to the top of the output and
-back down.
+**Do this:** press Enter and then **do not touch anything**. Let it run all the
+way to the end. Hold for a full three seconds after it stops printing.
 
-**Shot 3 — `shot3-console-toggle.mp4`** (needs ~30 seconds)
+**You should see** this land on screen:
 
-Window A, the live console. Start on `team:sdk` in the left rail — pause three
-seconds so the summary strip is readable. Click `team:billing` — pause three
-seconds and let the verdict chips visibly flip. Then click one fact with an
-amber stripe to expand it, and let the derivation chain and the *"This is the
-leak"* callout sit on screen for four seconds.
+```
+denied (claim, principal) pairs          120,206
+phantom - rebuilt from permitted           1,208   1.0%
+effective - genuinely withheld           118,998  99.0%
+```
 
-Move the mouse slowly and deliberately; fast mouse movement looks panicked.
+**Do not scroll away.** This is the single frame the entire video is built
+around. If any shot is going to be re-recorded until it is perfect, it is this
+one.
 
-**Shot 4 — `shot4-results.mp4`** (needs ~55 seconds)
+---
 
-Window C, `docs/RESULTS.md`. Scroll slowly to the leakage table and stop. Sit on
-it for five seconds. Then scroll to the **Leaks by derivation depth** table and
-sit on the depth-zero row for five seconds. Then scroll to **Is the baseline
-even well-defined?** and sit on the flip table for five seconds.
+#### Shot 4 → `shot4-depth.mp4` · ~20 seconds · covers Block 4
 
-**Shot 5 — `shot5-github.mp4`** (needs ~35 seconds)
+**Window:** terminal A, immediately after shot 3 — **do not clear the screen.**
 
-Window B, the terminal, cleared. Type:
+**Do this:**
+1. Scroll up slightly until all three depth rows are visible at once.
+2. Hold for four seconds.
+3. Scroll down slowly to the line showing `37.7%`.
+4. Hold for three seconds.
 
+**You should see:**
+
+```
+depth 1   96,206      0    0.0%   tight
+depth 2   12,000    804    6.7%   phantom
+depth 3   12,000    404    3.4%   phantom
+```
+
+**Why this shot:** one green `tight` row against two red `phantom` rows. The
+colour contrast does the explaining for you.
+
+---
+
+#### Shot 5 → `shot5-planner.mp4` · ~40 seconds · covers Block 5
+
+**Window:** terminal A. Clear it first with `clear`.
+
+**Type:**
 ```bash
-npm run audit:github
+npm run audit:planner
 ```
 
-Let it run to the end. It prints the eight repositories, the pipeline, the
-disclosure table, the 26/26 assertion pass, and finally the live 404. When it
-stops, wait three seconds.
+**Do this:** let it run to the end untouched. Then scroll to the sweep table and
+hold for five seconds. Then scroll to the session curve and hold three seconds.
 
-Then — still recording — switch to **window D, the private window**, and do
-*both* of these, in this order. The pair is the point: one 404, one 200, same
-organisation.
-
-First the public repository:
+**You should see** the sweep:
 
 ```
-https://github.com/cordon-demo/cordon-demo-handbook
+top-k  queries   bit   prevented  retained
+   10      240     0           0    100.0%
+   20      240     0           0    100.0%
+   50      240    12          60     97.6%
+  200      240   192         504     88.8%
 ```
 
-It loads. Sit on it for two seconds.
+**If you only have time to hold one thing, hold the sweep.** The jump from `0`
+to `12` at k=50 is the phase transition the voiceover describes.
 
-Then the private one:
+---
+
+#### Shot 6 → `shot6-llm.mp4` · ~20 seconds · covers Block 6
+
+**Window:** terminal A. Clear it first.
+
+**Type:**
+```bash
+npm run audit:llm
+```
+
+**Do this:** it replays from a cache so it is quick. Hold on the end for four
+seconds.
+
+**You should see** two things — the corpus measurement:
 
 ```
-https://github.com/cordon-demo/cordon-demo-borealis
+whose text names a FOREIGN area              0
 ```
 
-GitHub shows its 404 page. Sit on it for four seconds.
+and below it the amber **Inconclusive** verdict.
 
-> **Get this URL exactly right.** The repositories live under the
-> **`cordon-demo` organisation**, not under a personal account. A URL pointing
-> anywhere else also 404s — but because the repository does not exist, not
-> because you are not allowed to see it. That is the same picture for the wrong
-> reason, and a judge who checks will find it. Showing the public repo loading
-> first is what proves the 404 is about permission rather than existence.
+**Why this shot:** you are filming a null result you refused to spin. That is
+the point of it.
 
-That switch, in one unbroken take, is the single most convincing four seconds in
-the video. Do not cut between the terminal and the browser here — the fact that
-it is one continuous shot is the proof.
+---
 
-**Shot 6 — `shot6-cypher.mp4`** (needs ~25 seconds)
+#### Shot 7 → `shot7-policy.mp4` · ~25 seconds · covers Block 4 or 7 · **strong closer**
 
-Window A, the console, on the panel that shows the traversal / Cypher. Let it
-sit. Scroll once if there is more than a screen of it.
+**Window:** terminal A. Clear it first. The API must be running — `demo:prep`
+started it; check with `curl -s localhost:8787/api/health`.
+
+**Type** (one line, paste it):
+```bash
+curl -s localhost:8787/v1/policy/preview -H 'content-type: application/json' \
+  -d '{"grants":[{"subject":"team:billing","space":"cordon-demo-cygnus"}],
+       "includeInference":true}' | jq .impact
+```
+
+**Do this:** press Enter, let the JSON print, hold for five seconds.
+
+**You should see:**
+
+```json
+{
+  "documentsGained": 6,
+  "derivedGained": 4,
+  "unlockedByCombination": 4,
+  "newlyInferable": 8
+}
+```
+
+**Why this shot:** it takes 8.7 milliseconds and it is the one that makes this
+look like something an enterprise would buy rather than a benchmark. One grant
+approved 6 documents — and 4 derived facts nobody was shown.
+
+> If `jq` is not installed: `sudo apt install jq`. Without it the JSON prints on
+> one unreadable line.
+
+---
+
+#### Shot 8 → `shot8-budget.mp4` · ~25 seconds · covers Block 5 or 7
+
+**Window:** the console.
+
+**Do exactly this:**
+
+1. Make sure **`@cordon-demo/billing`** is still the selected asker and that you
+   have asked at least three questions as them — the budget is empty otherwise
+   and the shot shows zeroes. If in doubt, ask `priya raman`, then `billing`,
+   then `handbook` before you start recording.
+2. Click the **Disclosure budget** tab in the top nav.
+3. **Hold five seconds.**
+4. Click the **Risk surface** tab.
+5. **Hold five seconds.**
+6. Scroll the "Most tightly held" table down slowly by about one screen, then
+   stop.
+
+**You should see** on Disclosure budget: questions asked, facts disclosed, and
+**claims their history determines** — the number no document-level audit log can
+produce.
+
+And on Risk surface: `derived facts`, `visible to nobody`, the audience-by-depth
+meters, then a table of derived facts ranked by how few people may read them —
+several of them requiring 5+ spaces to read a claim about 2.
+
+**Do not rush either.** These two views are what make the project read as a
+product rather than a benchmark harness, and they are the last thing on screen.
+
+---
+
+### Step 6 — Check what you recorded before you move on
+
+Open each of the eight files and confirm:
+
+- [ ] the terminal text is **readable at a glance**, not squinting
+- [ ] there are ~2 still seconds at the start and end
+- [ ] no notification popped up mid-shot
+- [ ] no other windows or personal information are visible
+- [ ] shot 3 clearly shows `phantom - rebuilt from permitted   1,208`
+- [ ] shot 5 clearly shows the k=20 and k=50 rows
+- [ ] every file is renamed to the names above
+
+Re-record anything that fails a check. It is much cheaper now than in editing.
 
 ---
 
@@ -411,14 +732,26 @@ breathless. Watch the total stays under 3:00.
 Now look at where each audio block starts and ends, and put the matching shot
 above it on `V1`.
 
-1. Drag `shot1-console.mp4` onto `V1` at time zero.
+1. Drag `shot1-console-derivation.mp4` onto `V1` at time zero.
 2. It is probably longer than block 1's audio. Hover over its **right edge**
    until the cursor becomes an arrow, then drag left until the clip ends where
    the audio block ends.
-3. Drag `shot2-leak.mp4` onto `V1` immediately after. Trim its right edge to end
-   where block 2's audio ends.
-4. Keep going: `shot3` under block 2's tail if there is room, `shot4` under
-   block 3 **and** block 4, `shot5` under block 5, `shot6` under block 6.
+3. Drag `shot2-console-switch.mp4` onto `V1` immediately after. Trim its right
+   edge to end where block 2's audio ends.
+4. Keep going, one shot per block:
+
+| block | shot |
+|---|---|
+| 1 · the hole | `shot1-console-derivation` |
+| 2 · we closed it | `shot2-console-switch` |
+| **3 · the turn** | **`shot3-inference`** |
+| 4 · the price | `shot4-depth` |
+| 5 · shippable | `shot5-planner`, then `shot8-budget` for the ledger line |
+| 6 · credibility | `shot6-llm` |
+| 7 · the close | `shot7-policy`, then `shot8-budget` (Risk surface half) |
+
+**Block 3 gets the most screen time of any block.** If you are short of footage
+anywhere, steal it from blocks 1 and 2, never from 3.
 
 Rules of thumb:
 

@@ -1,0 +1,45 @@
+{
+  "provenance": {
+    "gitSha": "9e3fc8073ba592b5b8e9774c4e13a4e53b4db3ea",
+    "gitDirty": true,
+    "generatedAt": "2026-08-21T00:13:09.530Z",
+    "node": "v22.14.0",
+    "seed": 20260820,
+    "corpus": {
+      "root": "data/herb",
+      "digest": "9268e8dabe619e7197025af0f92af7242e2002ff6db5026c78b31bb601ca2240",
+      "files": 34,
+      "bytes": 28927691
+    }
+  },
+  "model": "gpt-4o-mini",
+  "liveKeyPresent": false,
+  "probes": {
+    "attempted": 60,
+    "positives": 30,
+    "negatives": 30,
+    "live": 0,
+    "replayed": 60,
+    "skipped": 0
+  },
+  "confusion": {
+    "tp": 0,
+    "fp": 0,
+    "tn": 30,
+    "fn": 30
+  },
+  "scores": {
+    "recallPct": 0,
+    "falsePositivePct": 0,
+    "precisionPct": 0,
+    "advantagePct": 0
+  },
+  "corpus": {
+    "level0": 16594,
+    "namesOwnSpace": 979,
+    "namesForeignSpace": 0,
+    "channelPresent": false
+  },
+  "degenerate": true,
+  "verdict": "inconclusive"
+}

@@ -20,7 +20,7 @@ ontology) built on HydraDB. Repo state as of now:
 - `src/bench/` runs 1,514 HERB questions × 12 principals = 18,168 trials and reports a
   leak-rate table against two baselines.
 - `web/src/App.tsx` is a console that re-asks a question as a different principal.
-- **`README.md` still contains `Demo video: <add URL before submitting>`.**
+- **Demo video published:** https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n
 
 Judging criteria, in the organisers' own order: technical execution; use of HydraDB and
 graph-native approaches; product completeness and usability; quality of results; originality.
@@ -63,10 +63,9 @@ the next. If you run out of time, everything above the line you reached still sh
 
 ## P0 — Mechanical disqualification risks (do these first, they are cheap)
 
-**P0.1 Demo video placeholder.** The rules list "missing demo video" as a disqualification
-criterion. Do not leave this to the end. Produce the script now (`docs/DEMO.md` already has a
-guide) so recording is the last 30 minutes rather than a scramble. Script must be ≤3:00 with
-the aggregation attack as the emotional peak, not the setup.
+**P0.1 Demo video. Complete.** Published at
+https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n with the aggregation attack as
+the centrepiece.
 
 **P0.2 Deploy the console.** `web/` must be live at a URL a judge can open without setup,
 with a read-only demo graph pre-loaded so first paint shows a result, not a connection form.
@@ -156,8 +155,8 @@ bulk-commit at the end; a 40-file commit at 23:30 reads badly next to 19 clean o
 
 ## Definition of done
 
-- [ ] README first screen: claim, aggregation number, live URL, video URL
-- [ ] Demo video ≤3:00, unlisted-but-open, link works from a logged-out browser
+- [x] README first screen: claim, aggregation number, live URL, video URL
+- [ ] Demo video ≤3:00; current public upload is 4:10 and must be shortened
 - [ ] Fresh clone → one command → working system, verified in a scratch directory
 - [ ] `docs/ATTACK.md` with the formal definition, mined instances, and raw artifacts
 - [ ] Exhaustive invariant result with total pair count

@@ -31,8 +31,8 @@ Everything below serves one of three goals:
 
 Not improvements. Failure modes.
 
-1. **Demo video.** Three minutes hard; anything past may not be reviewed. Not in
-   the README banner yet. Script in Section 10.
+1. **Demo video. Linked, duration unresolved.** The published upload is 4:10,
+   over the 3:00 judging limit: https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n
 2. **Commit history note.** Your timestamps are evenly spaced, all landing on
    `:00` seconds, author date identical to commit date, until the last two
    commits. That is what replayed or scripted history looks like, and organizers
@@ -402,7 +402,7 @@ Order matters more than prose, and yours is close. Target:
 
 ```
  1. Title + the one sentence
- 2. Track / video / demo / results links               ← video URL missing
+ 2. Track / video / demo / results links               ← complete
  3. THE RESULT — main table + leak unit defined
  4. Retriever invariance block                          ← NEW (§1)
  5. Where the leak lives — depth table
@@ -484,6 +484,11 @@ before the repo.
 - [ ] Commit-history note in README
 - [ ] Leak unit defined; no rounded n=3 anywhere
 - [ ] Retriever sweep: 3 retrievers × 3 systems, leak column invariant
+￼
+Notify
+￼
+
+
 - [ ] Compositional recovery measured, by depth
 - [ ] Refusal channel measured in bits; indistinguishable mode shipped and costed
 - [ ] Threat-model table: three channels, three sizes

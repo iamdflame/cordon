@@ -6,23 +6,262 @@ A fact inferred from three documents is not a document. It has no ACL of its own
 so document-level filtering, which is what every enterprise AI assistant does,
 has no answer for it.
 
+Cordon gives it one, and proves the rule sound. Then it does the part that
+actually decides whether a security system is real: **it attacks its own proof,
+finds where the proof does not reach, and publishes the price of closing the
+gap.**
+
 ### **[cordon-graph.vercel.app](https://cordon-graph.vercel.app)** · [open the console →](https://cordon-graph.vercel.app/console)
 
-**Demo video:** _<add URL before submitting>_
+**Demo video:** [Watch the pitch and demo](https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n)
+
+---
+
+## Two confidentiality properties, and only one of them is free
+
+Nearly every access-control claim in AI conflates these. Separating them is the
+whole contribution.
+
+| | **provenance confidentiality** | **content confidentiality** |
+|---|---|---|
+| the question | did the system *hand over* a fact the asker lacks rights to? | at the end, does the asker *know* the restricted thing? |
+| Cordon's status | **closed**, [proved by induction](docs/SOUNDNESS.md) | **measured and priced**, not closed by default |
+| evidence | 0 leaks in 330,190 (fact, principal) pairs | 1,208 phantom denials in 120,206 |
+| **cost** | **0.000 F1 — free** | **37.7% of the evidence an asker may legitimately read** |
+
+**A refusal that the asker can undo is not a refusal.** Cordon's derivation
+rules are deterministic and ship in this repository under Apache-2.0, so an
+adversary does not reverse-engineer them — they `git clone` them, run *our own
+rules* over the facts we disclosed, and rebuild some of what we refused. We
+measured that against ourselves:
+
+| depth | denied | rebuilt anyway | verdict |
+|---|---|---|---|
+| 1 | 96,206 | **0** | **tight** — the requirement is exactly as strong as it needs to be |
+| 2 | 12,000 | 804 (6.7%) | phantom |
+| 3 | 12,000 | 404 (3.4%) | phantom |
+
+A **phantom denial** satisfies the soundness theorem perfectly and protects
+nothing. It costs the asker an answer, costs the operator a support ticket, and
+returns zero — while appearing on a dashboard as protection. *It is a lie the
+system tells its owner.*
+
+Closing one is a **minimum cut**, not a stronger requirement — the asker is
+rebuilding the claim from evidence they are *entitled* to, and no requirement on
+the derived node can reach that evidence. We compute those cuts exactly, verify
+every one by re-running the adversary, and state what they cost.
+
+> **[The full result → docs/INFERENCE.md](docs/INFERENCE.md)** · `npm run audit:inference`
+
+---
+
+## And then the number that makes it shippable
+
+37.7% is unshippable. No operator destroys a third of their staff's legitimate
+access. But that figure prices safety against an adversary who has **aggregated
+everything they are entitled to** — and someone reading one answer is not that
+adversary.
+
+So we made the disclosure decision over the *set* instead of per fact:
+
+```
+choose D ⊆ Admissible(p)   maximising utility(D)
+subject to  closure(D) ∩ Protected(p) = ∅
+```
+
+| top-k | plans where it bit | claims prevented | evidence retained |
+|---|---|---|---|
+| 10 | 0 | 0 | **100.0%** |
+| **20** *(production depth)* | **0 of 1,200** | 0 | **100.0% — free** |
+| 50 | 12 | 60 | 97.6% |
+| 100 | 60 | 144 | 96.2% |
+| 200 | 192 | 504 | 88.8% |
+
+**At production retrieval depth, inference safety is free — 0 violations in
+1,200 planned queries — and it first bites at k=50.** That is a measured phase
+transition, not a claim: an answer simply does not carry enough evidence to
+rebuild with until you retrieve deep enough.
+
+**But per-query safety does not compose.** Ten individually safe answers can
+jointly rebuild a refused claim — the aggregation attack, moved from documents
+to sessions. A gate that only looks at the current reply is safe against a
+reader and useless against an attacker, who will ask twice. So Cordon keeps a
+**disclosure ledger** per principal and evaluates the constraint over everything
+they have been shown:
+
+| | query 1 | query 30 |
+|---|---|---|
+| evidence retained (cumulative, n=3,520) | 100.0% | **80.7%** |
+
+Confidentiality stops being a yes/no and becomes **a budget that degrades
+gracefully**. Answers keep coming until the asker's own history starts to
+determine something they were refused — and then, precisely then, withholding
+begins. Every session across the audit verified safe.
+
+> **[The full result → docs/PLANNER.md](docs/PLANNER.md)** · `npm run audit:planner`
+> · live at `POST /v1/plan`
+
+---
 
 > **Judges — the 90-second path.** No API keys, no accounts.
 > ```bash
 > docker compose up        # clean checkout to a working console
 > npm run audit:github     # real GitHub permissions; 26/26 404 assertions
 > npm run attack           # the aggregation attack, and the 16 → 0 fix
+> npm run audit:inference  # we attack our own proof, and price the defence
+> npm run audit:planner    # and the planner that makes the fix shippable
+> npm run audit:policy     # what one grant actually costs: 100% invisible
 > ```
 > Or click the console above — it is a live HydraDB instance, not a mock.
 
-[Results](docs/RESULTS.md) · [**The aggregation attack**](docs/ATTACK.md) ·
-[**What we got wrong**](docs/CORRECTIONS.md) ·
+[**Provenance is not content**](docs/INFERENCE.md) ·
+[**Inference-safe planning**](docs/PLANNER.md) ·
+[**Testing our own lower bound**](docs/LLM-ADVERSARY.md) ·
+[**What a grant costs**](docs/POLICY.md) · [Results](docs/RESULTS.md) ·
+[**The aggregation attack**](docs/ATTACK.md) · [**What we got wrong**](docs/CORRECTIONS.md) ·
 [Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Disclosure-dependent truth](docs/CONTESTED.md) ·
 [Soundness](docs/SOUNDNESS.md) · [**HydraDB capability map**](docs/HYDRADB-ENGINE-NOTES.md) ·
 [DKL benchmark](bench/dkl/) · [Demo guide](docs/DEMO.md)
+
+---
+
+## And the feature that only a derivation-aware system can have
+
+An administrator adds one person to one team. Every access-review tool in
+existence tells them what that grants: **the documents in that space.** That is
+correct, and it is not the whole answer.
+
+```
+before:   Alice may read {A, B}       F requires {A, B, C}   denied
+grant C:  Alice may read {A, B, C}    F requires {A, B, C}   DISCLOSED
+```
+
+Nobody granted Alice access to *F*. Nobody was asked about *F*. **F is not a
+document, so it appears in no document-level access review.**
+
+Over 150 single grants on the full corpus:
+
+| | |
+|---|---|
+| documents disclosed | 713,882 — *what the administrator expects* |
+| **derived facts disclosed** | **380** — *invisible to a document-level review* |
+| **…unlocked only in combination** | **380 — 100.0%** |
+| refused claims made *rebuildable* (30 grants) | 18 |
+
+> **Every single derived fact a grant disclosed required a space the principal
+> already held.** None were granted. All were *completed* — and the
+> administrator approving "read access to one space" approved every one of them
+> without being shown a single one.
+
+`POST /v1/policy/preview` computes this **before** the change is applied. You can
+only compute the blast radius of a grant if you have modelled derivation — and
+if you have modelled derivation, you are obliged to.
+
+> **[The full result → docs/POLICY.md](docs/POLICY.md)** · `npm run audit:policy`
+
+---
+
+## Two things a security product needs that a benchmark does not
+
+### The log must not become the leak
+
+The obvious audit record for a refusal is *"withheld fact F from Alice"*, with
+F's text alongside so a reviewer can see what was protected. **That record is a
+second copy of the secret**, in a file almost always readable by more people than
+the fact was. A system that refuses to tell Alice something and then writes it
+into a log her platform team can read has not protected anything — it has moved
+the disclosure somewhere nobody is looking.
+
+Cordon's log records **identifiers and requirement metadata, never content**, and
+[refuses at write time](src/cordon/audit.ts) to store a field named `text`,
+`content`, `body`, `snippet`, `answer` or `summary`. You can prove what was
+decided, for whom, and on what grounds. You cannot read the withheld fact out of
+the log, because it is not in there.
+
+### A log you cannot verify is a log the attacker can edit
+
+An append-only file is append-only until someone opens it in an editor — and the
+threat is not an outsider, it is an insider deleting the line that records what
+they did. Entries are **hash-chained**: each carries a SHA-256 over its contents
+and the previous entry's hash.
+
+`test/audit.test.ts` forges the log four ways and requires the verifier to catch
+each one and say where:
+
+| attack | detected |
+|---|---|
+| edit one entry | ✅ at that index |
+| delete an entry | ✅ |
+| reorder two entries | ✅ |
+| **edit an entry *and* recompute its hash** | ✅ — at the *next* entry, which still commits to the old hash |
+
+That last row is why it is a chain and not a checksum.
+
+```bash
+curl -s localhost:8787/api/audit/verify
+# {"ok":true,"meaning":"every entry hashes to its recorded value and follows the previous entry"}
+```
+
+### And it is gated on every commit
+
+```bash
+npm run report
+```
+
+Nine properties, checked against the committed artifacts, **exit non-zero when
+one stops holding.** It separates *fail* (fix the code) from *stale* (re-run the
+audit), because collapsing them makes the second look like the first and wastes
+an hour. Wired into [CI](.github/workflows/security.yml).
+
+> A security property nobody checks on every commit is a security property you
+> **used to** have.
+
+---
+
+## Everything in this repository
+
+Every row is a command that regenerates the number next to it, writing a
+provenanced artifact under [`artifacts/`](artifacts/) carrying the git SHA, the
+corpus digest and the seed.
+
+### The audits
+
+| what it establishes | command | written to |
+|---|---|---|
+| **0 leaks / 18,168 trials, at 0.000 F1 cost** | `npm run audit` | [RESULTS.md](docs/RESULTS.md) |
+| **Real GitHub permissions — 26/26 404 assertions** | `npm run audit:github` | [RESULTS-GITHUB.md](docs/RESULTS-GITHUB.md) |
+| **The aggregation attack: 16 → 0** | `npm run attack` | [ATTACK.md](docs/ATTACK.md) |
+| **1,208 phantom denials; the cut costs 37.7%** | `npm run audit:inference` | [INFERENCE.md](docs/INFERENCE.md) |
+| **Set-level safety: free at k=20, bites at k=50** | `npm run audit:planner` | [PLANNER.md](docs/PLANNER.md) |
+| **We point an LLM at our own lower bound** | `npm run audit:llm` | [LLM-ADVERSARY.md](docs/LLM-ADVERSARY.md) |
+| **100% of a grant's derived disclosures are invisible** | `npm run audit:policy` | [POLICY.md](docs/POLICY.md) |
+| Refusal as an oracle, measured in bits | `npm run audit:channels` | [the threat model](#the-threat-model) &mdash; the audit also writes a standalone `docs/THREAT-MODEL.md` |
+| Disclosure-dependent truth | `npm run audit:contested` | [CONTESTED.md](docs/CONTESTED.md) |
+| What query-time traversal costs | `npm run bench:latency` | stdout |
+| What the engine will and will not do | `npm run bench:engine` | [HYDRADB-ENGINE-NOTES.md](docs/HYDRADB-ENGINE-NOTES.md) |
+| **Every property still holds, or the build fails** | `npm run report` | stdout, exit code |
+| **58 tests — no engine required** | `npm test` | — |
+
+### The product
+
+| surface | what it does |
+|---|---|
+| **Console** — [live](https://cordon-graph.vercel.app/console) | three views: **Ask** (did this answer disclose correctly), **Risk surface** (where the org is exposed), **Disclosure budget** (what a session has given away) |
+| `POST /v1/admissible` | the per-fact gate. Post what your retrieval found; get back what this principal may see and exactly which spaces they lack. |
+| `POST /v1/plan` | **the set-level gate.** Returns the largest subset whose *closure* cannot rebuild anything the asker was refused. `session: true` evaluates against their whole history. |
+| `GET /api/risk` | the exposure map: derived facts ranked by how few people may read them |
+| `POST /v1/policy/preview` | **what a grant actually costs**, computed before you apply it — including the derived facts no access review shows |
+| `GET /api/audit` · `/api/audit/verify` | the decision log — **hash-chained**, so an edited or deleted entry is detectable, and **content-free**, so it cannot become a second copy of what was withheld |
+| **MCP server** | `ask_as`, `check_admissible`, `plan_disclosure` — an agent is the hardest caller, because it asks forty questions and stitches the answers together |
+
+### The proofs and the corrections
+
+| | |
+|---|---|
+| [**SOUNDNESS.md**](docs/SOUNDNESS.md) | the theorem, by induction — and precisely what it does *not* cover |
+| [**CORRECTIONS.md**](docs/CORRECTIONS.md) | ten things we got wrong, found by us, with the commit that fixed each |
+| [**the threat model**](#the-threat-model) | every channel, including the ones our own defence opens. `npm run audit:channels` writes it out as `docs/THREAT-MODEL.md`; that needs the ingested graph, so it is regenerated rather than committed |
+| [bench/dkl/](bench/dkl/) | the derived-knowledge leakage benchmark, standalone |
 
 ---
 
@@ -37,11 +276,21 @@ has no answer for it.
 | disclosure decided by ingest order | 1,008 of 7,280 pairs | **never** | — |
 | aggregation leaks *(real GitHub perms)* | 16 | 16 → **0** claim-aware | *we found this in our own system* |
 | verified against | its own model of access | **GitHub's own 404** | — |
+| **denials our own rules undo** | *never measured* | **1,208 of 120,206** | *we attacked our own proof* |
+| **price of closing them** | — | **37.7% of readable evidence** | *content security is not free* |
 
 > **Read the third row first.** Eliminating every leak cost us **nothing**. Cordon
 > and the deployed baseline answer *identically well* — 0.099 F1 on both — while
 > Cordon leaks zero facts across 18,168 trials, with zero false denials. Security
 > here is not a trade against utility. It is free.
+>
+> **Then read the last two rows, because they are the ones that cost us
+> something to publish.** "Free" is true of *provenance* — of never handing over
+> a fact you lack rights to. It is not true of *content*. When we built an
+> adversary that runs our own published rules over what we disclosed, it rebuilt
+> 1,208 denials we had counted as protection, and closing those costs 37.7% of
+> an asker's legitimate evidence. A system that reports only the first number
+> has not looked for the second.
 
 For reference: retrieval with no graph at all (BM25) scores **0.065**, and the
 ungated graph scores **0.075** while leaking **440,838** facts. Both gated
@@ -330,28 +579,72 @@ the one our own defence opens.
 | channel | status | size |
 |---|---|---|
 | **Explicit derivation** | **closed** | 0 leaks in 330,190 (fact, principal) pairs, [proved](docs/SOUNDNESS.md) and checked exhaustively |
-| **Compositional inference** | **open, measured** | `npm run audit:channels` |
+| **Compositional inference** | **measured and priced** | 1,208 phantom denials; closing them costs 37.7% of readable evidence — [INFERENCE.md](docs/INFERENCE.md) |
 | **Refusal side channel** | **mitigable, measured** | in bits, with a mode that closes it and the cost stated |
+| **Set-level inference** | **closed at production depth** | 0 violations in 1,200 planned queries; first bites at k=50 — [PLANNER.md](docs/PLANNER.md) |
+| **A stronger (LLM) adversary** | **tested, inconclusive** | the channel is absent from this corpus, and we say so — [LLM-ADVERSARY.md](docs/LLM-ADVERSARY.md) |
 
 ```bash
 npm run audit:channels
 ```
 
-### Compositional inference — open
+### Compositional inference — measured, priced, and it is *our* proof that breaks
 
 A principal denied fact *F* still holds everything Cordon *did* give them. Our
-rule is sound over explicit derivation and says nothing about inference: if the
-permitted answers jointly determine *F*, withholding *F* accomplishes nothing.
+soundness theorem is sound over **provenance** and says nothing about what the
+asker can rebuild. So we built the adversary and pointed it at ourselves.
 
-We measure **recovery** — the share of a denied fact's claims already reachable
-from facts the principal may see — and break it down by depth. Recovery falls as
-depth rises, for a structural reason rather than a lucky one: a deeper fact
-rests on more spaces, so a principal denied it holds a smaller share of what it
-is built from. **Cordon degrades most gracefully exactly where the explicit
-channel is most dangerous.**
+The adversary does not guess our rules. **They are in this repository, under
+Apache-2.0** — Kerckhoffs's principle with unusual force. It takes the facts
+Cordon disclosed and runs *our own derivation rules* to fixpoint:
 
-We are not closing this channel. Sizing it is the honest position; claiming that
-derived-knowledge access control defeats inference would not be.
+```
+phantom(p) = Denied(p) ∩ closure(Permitted(p))    the denial bought nothing
+```
+
+**Depth 1 is tight — 0 phantoms in 96,206 denials.** A level-1 fact names every
+space its subject works in; an asker who cannot read one of them cannot observe
+the subject there, so the set they reach is strictly smaller and the claim does
+not match. The requirement is exactly as strong as it needs to be.
+
+**Depths 2 and 3 are not — and it is a fix we were right to make that broke
+them.** `pair:A:B` asserts something about A and B alone, but inherits the union
+of every space its supports touch. We raised that requirement deliberately after
+traversal caught it under-stated ([the bug worth recording](#the-bug-worth-recording))
+— which was **correct for provenance and worth nothing for content**. Cordon now
+demands five spaces to read a claim two spaces are enough to derive, and
+everyone holding exactly `{A, B}` is refused a fact they rebuild in one step.
+
+Both halves of that sentence are worth publishing. Raising the requirement was
+not a mistake; believing it bought confidentiality was.
+
+**Closing it is a cut, not a stronger requirement.** The asker is not at the
+front door — they are rebuilding the claim from evidence they are entitled to,
+and no requirement on the derived node reaches that evidence. The only defence
+is to withhold that evidence, which is a **minimum vertex cut on the derivation
+hypergraph**. The structure decomposes exactly, so we do not approximate:
+
+| gate | shape | minimum cut |
+|---|---|---|
+| `span(e,a,b)` | AND of two ORs | `min(|facts(e,a)|, |facts(e,b)|)` |
+| `pair(a,b)` | ≥2 of n spans | `sum(costs) − max(cost)` |
+| `cluster(a,b,c)` | all 3 pairs | `min` over the three pair costs |
+
+Optimality is **checked, not asserted**: `test/closure.test.ts` enumerates every
+subset of the evidence on small instances and requires the solver to match the
+true minimum exactly. *That test failed on its first run* — and the bug was in
+the test, which is recorded in the file rather than quietly fixed. Every cut the
+audit computes is then verified by re-running the adversary against it;
+400 of 400 attempted held.
+
+The price: **37.7% of the evidence an asker may legitimately read.** We ship the
+measurement rather than the mitigation-on-by-default, because destroying a third
+of a colleague's legitimate access is a governance decision, not an engineering
+one. What a security product owes its operator is the number.
+
+```bash
+npm run audit:inference
+```
 
 ### Refusal as an oracle — mitigable, and *we* created it
 
@@ -452,6 +745,49 @@ curl -s localhost:8787/v1/admissible -H 'content-type: application/json' -d '{
   }]
 }
 ```
+
+### The set-level gate
+
+`/v1/admissible` answers the per-fact question. [We showed that is not
+sufficient](docs/INFERENCE.md): what an answer leaks is a property of the *set*,
+and every fact in a reply can be individually admissible while the reply as a
+whole re-derives something the asker was refused.
+
+`POST /v1/plan` answers the set question. Post your ranked candidates; get back
+the subset that is safe to serve, plus what was dropped and **which protected
+claim it would have completed**.
+
+```bash
+curl -s localhost:8787/v1/plan -H 'content-type: application/json' -d '{
+  "principal": "eid_9b023657",
+  "facts": [{"id": "f:..."}, {"id": "f:..."}],
+  "session": true
+}'
+```
+
+```json
+{
+  "safe": true,
+  "disclosed": [ ... ],
+  "suppressed": [{
+    "id": "f:AnomalyForce::doc_902#0",
+    "wouldComplete": ["pair|AnomalyForce|EdgeForce"]
+  }],
+  "stats": { "admissible": 8, "disclosed": 6, "retention": 0.75 },
+  "ledger": { "size": 17, "queries": 12 }
+}
+```
+
+`session: true` evaluates the constraint against everything this principal has
+already been shown, because **per-query safety does not compose.** The ledger is
+what turns a per-answer check into a guarantee that survives an attacker asking
+twice. Measured live: over a 16-query session the ledger grew to 17 facts,
+`determines` rose 0 → 3 claims, and suppression began exactly when history
+started reaching protected ground.
+
+> In this build ledgers are in memory, which is right for a demo and wrong for a
+> deployment — a ledger that resets when the process restarts hands the attacker
+> a way to clear their own budget. Said here rather than discovered later.
 
 ### MCP server
 
@@ -676,7 +1012,16 @@ against a requirement recomputed from the corpus.
 | ER precision 100.0% / recall 99.0% | `npm run build:graph -- --dry` | stdout |
 | Edge plan, 226,357 edges | `npm run build:graph -- --dry` | stdout |
 | 330,190 pairs, 0 violations | `npm run audit` | `docs/RESULTS.md` |
-| Security invariants | `npm test` | 13 tests, no engine needed |
+| Security invariants | `npm test` | 58 tests, no engine needed |
+| 1,208 phantom denials; cut cost 37.7% | `npm run audit:inference` | [`docs/INFERENCE.md`](docs/INFERENCE.md) |
+| Cuts are *minimum*, vs. brute force | `npm test` | `test/closure.test.ts` |
+| Inference safety free at k=20, bites at k=50 | `npm run audit:planner` | [`docs/PLANNER.md`](docs/PLANNER.md) |
+| Session budget: 100% → 80.7% over 30 queries | `npm run audit:planner` | [`docs/PLANNER.md`](docs/PLANNER.md) |
+| Planner is safe; greedy retains 92.7% of optimal | `npm test` | `test/planner.test.ts` |
+| LLM adversary recovers nothing, and why | `npm run audit:llm` | [`docs/LLM-ADVERSARY.md`](docs/LLM-ADVERSARY.md) |
+| One grant discloses 100% invisible derived facts | `npm run audit:policy` | [`docs/POLICY.md`](docs/POLICY.md) |
+| Log tampering is detected four ways | `npm test` | `test/audit.test.ts` |
+| Every property still holds | `npm run report` | exit code |
 
 ---
 
@@ -724,13 +1069,24 @@ npm run demo:leak
 Everything else, in rough order of how much it will change your mind:
 
 ```bash
+npm run audit:inference          # we attack our own proof: 1,208 phantom denials
+npm run audit:planner            # the planner that makes the fix shippable
+npm run audit:llm                # we point an LLM at our own lower bound
+npm run audit:policy             # what one grant actually discloses
+npm run report                   # gate every property; non-zero on regression
 npm run audit:github             # real permissions; no credentials needed
-npm run audit:channels           # the two channels we did not close
+npm run audit:channels           # the channels our own defence opens
 npm run audit:contested          # disclosure-dependent truth
 npm run bench:latency            # what query-time traversal costs
 npm run bench:engine             # every formulation we tried against HydraDB
-npm test                         # 15 tests, including property-based soundness
+npm test                         # 58 tests: soundness, cut optimality, planner, policy, tamper detection
 ```
+
+`audit:inference`, `audit:planner` and `audit:llm` need **no engine** — they
+recompute requirements from the corpus by traversal, which is the independent
+derivation the main audit already checks the graph against. `audit:llm` replays
+a committed response cache, so it reproduces byte-for-byte **without an API
+key**; set `OPENAI_API_KEY` only if you want to extend the cache.
 
 > **Note on restarting HydraDB.** The local object store does not implement
 > conditional writes, so a container stopped and started over an existing store
@@ -745,8 +1101,14 @@ npm run api                            # :8787
 cd web && npm install && npm run dev   # :5173
 ```
 
-Ask as any of 530 people, watch the answer change, and see each withheld fact
-with the derivation and the missing space that caused it.
+Three views:
+
+- **Ask** — ask as any of 530 people, watch the answer change, and see each
+  withheld fact with the derivation and the missing space that caused it.
+- **Risk surface** — every derived fact ranked by how few people may read it.
+  This is knowledge no document contains, so no document ACL can describe it.
+- **Disclosure budget** — the live ledger for the selected asker: facts
+  disclosed, and the number of claims their own history already determines.
 
 </details>
 
@@ -801,11 +1163,26 @@ reading documentation. Findings that changed the architecture:
 - **Fact extraction is deterministic and shallow.** Sentence-level heuristics,
   capped at 2 facts per artifact to stay inside the engine's write budget. Every
   run is byte-identical.
-- **The compositional channel is open.** Cordon closes *explicit* derivation: it
-  will not hand you a fact whose provenance you lack. It says nothing about
-  *inferential* reconstruction — whether several separately-permitted answers
-  together narrow a denied fact to near-certainty. We discovered this channel and
-  have not measured it. Naming it is more honest than implying it is closed.
+- **Content confidentiality is priced, not closed.** Cordon closes *provenance*:
+  it will not hand you a fact whose sources you lack. [We measured what that is
+  worth](docs/INFERENCE.md) and found 1,208 denials our own published rules
+  rebuild anyway. Minimum cuts close them at 37.7% of an asker's legitimate
+  evidence, and we ship that as a measurement rather than a default.
+- **Our adversary runs *our* rules, so every leak number is a lower bound** —
+  and [we tried to break that bound rather than just declaring it](docs/LLM-ADVERSARY.md).
+  A language model reading permitted prose recovered **nothing**, and the reason
+  is measurable rather than flattering: **0 of 16,594 level-0 facts name a
+  product area other than their own**, so there was nothing to cross-reference.
+  That measures HERB, not Cordon. The caveat stands as *untested here*, not
+  disproved. Per-claim cuts are exact minima; the joint cut across a principal's
+  phantoms is an upper bound, since computing it exactly is set-cover.
+- **The planner's subset choice is greedy, not optimal.** Exact maximisation is
+  NP-hard. The *safety* of every plan is exact and re-checked against the rule
+  engine; the *utility* is a heuristic, and `test/planner.test.ts` measures it at
+  **92.7% of the optimal subset** rather than asserting it is good.
+- **Disclosure ledgers are per principal and in memory.** Two colluding askers
+  pool histories and nothing here measures that, and a process restart clears
+  every budget. Both are deployment gaps, not research ones, and both are real.
 - **Over-restrictive on genuinely public artifacts**, by choice — see the bug.
 - **Ingest is write-bound** at ~50–130 edges/s. Built once, re-attached after.
 - **Cordon governs disclosure, not correctness.** It decides whether you may be
@@ -817,21 +1194,38 @@ reading documentation. Findings that changed the architecture:
 src/
   hydra/     client, namespaced id registry, truncation guard
   cordon/    model | corpus | acl | mentions | resolve | facts | ingest | query
+             closure — the adversary that re-runs our own rules, and the
+                       minimum cuts that close what it rebuilds
+             planner — disclosure decided over the *set*, plus the
+                       per-principal ledger that makes it hold across a session
+             policy — editable policy, compiled to the enforced model, with
+                      impact preview: what a grant actually costs
+             audit — hash-chained decision log that refuses to store content
              contradict — deterministic contest detection
              corpus/github — permissions fetched from a real system
   bench/     run (audit + retriever sweep) | evaluate | answer | demo
+             inference — provenance vs content, phantom denials, cut pricing
+             planner — what set-level safety costs per query, per session,
+                       and at every retrieval depth
+             policy — the blast radius of one grant, measured
+             report-card — gates every property; exits non-zero on regression
+             llm-adversary — a stronger attacker, cached so it reproduces
              channels — compositional and refusal side channels
              contested — disclosure-dependent truth
              github — the real-permissions audit and its 404 assertions
              latency | engine-probe | retrievers
-  api/       HTTP API, including POST /v1/admissible
+  api/       HTTP API: POST /v1/admissible (per fact), POST /v1/plan (per set,
+             inference-safe, session-aware), GET /api/risk
   mcp/       MCP server: ask_as, check_admissible
 bench/dkl/   the derived-knowledge leakage benchmark, standalone
-web/         React console: ask as anyone, see what is withheld and why
+web/         React console, three views: Ask (did this answer disclose
+             correctly), Risk surface (where the org is exposed), Disclosure
+             budget (what a session has given away)
 scripts/     hydra-up | fetch-herb | seed-github-fixture | seed-github-org
              repro-row-cap — minimal reproduction of the engine bug
 docs/        results, threat model, soundness, latency, engine notes, demo guide
-test/        15 tests including property-based soundness, no engine required
+test/        58 tests: property-based soundness, brute-forced cut
+             optimality, README-vs-artifact binding. No engine required.
 ```
 
 ## A note on the commit history
@@ -864,7 +1258,14 @@ by running the code in it, and every claim is reproducible by a reader with
 - **Fastify**, **undici**, **React**, **Vite** — MIT.
 - Typefaces: Space Grotesk, JetBrains Mono — SIL Open Font License.
 
-No language model is used at any point in the pipeline.
+**No language model is used at any point in the pipeline** — not in extraction,
+resolution, derivation, or admissibility. Every number in this repository is
+byte-reproducible without an API key.
+
+A model appears in exactly one place, as an *attacker*:
+[`docs/LLM-ADVERSARY.md`](docs/LLM-ADVERSARY.md) points one at our own
+lower-bound caveat. Its responses are cached and committed, keyed by a SHA-256
+of the exact prompt, so that audit reproduces without a key too.
 
 ## License
 

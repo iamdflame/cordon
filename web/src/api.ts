@@ -94,3 +94,75 @@ export const ask = (principal: string, question: string) =>
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ principal, question }),
   });
+
+/* ------------------------------------------------------------ risk surface */
+
+export interface RiskFact {
+  id: string;
+  text: string;
+  level: number;
+  requires: string[];
+  audience: number;
+  audienceShare: number;
+}
+
+export interface Risk {
+  principals: number;
+  spaces: number;
+  derivedFacts: number;
+  invisible: number;
+  byLevel: Array<{ level: number; facts: number; meanAudience: number }>;
+  riskiest: RiskFact[];
+}
+
+export const getRisk = () => json<Risk>('/api/risk');
+
+/* -------------------------------------------------- inference-safe planning */
+
+export interface PlanResult {
+  principal: string;
+  latencyMs: number;
+  safe: boolean;
+  disclosed: Array<{ id: string; text: string; level: number }>;
+  inadmissible: Array<{ id: string; requires: string[]; missing: string[] }>;
+  /** Admissible, withheld anyway because the *set* would have leaked. */
+  suppressed: Array<{ id: string; text: string; wouldComplete: string[] }>;
+  violationsPrevented: string[];
+  stats: {
+    candidates: number;
+    admissible: number;
+    disclosed: number;
+    suppressedForInference: number;
+    closureSize: number;
+    retention: number;
+  };
+  ledger?: { size: number; queries: number };
+  unknown: string[];
+}
+
+export const planDisclosure = (principal: string, factIds: string[], session = true) =>
+  json<PlanResult>('/v1/plan', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ principal, facts: factIds.map((id) => ({ id })), session }),
+  });
+
+/* ---------------------------------------------------------------- sessions */
+
+export interface SessionState {
+  principal: string;
+  size: number;
+  queries: number;
+  /** Claims this principal's own history already determines. */
+  determines: number;
+}
+
+export const getSession = (principal: string) =>
+  json<SessionState>(`/api/session/${encodeURIComponent(principal)}`);
+
+export const resetSession = (principal: string) =>
+  json<{ principal: string; cleared: number }>('/api/session/reset', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ principal }),
+  });

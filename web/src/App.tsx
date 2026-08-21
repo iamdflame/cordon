@@ -1,4 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import RiskView from './views/Risk';
+import SessionView from './views/Session';
+
+/**
+ * The console has three jobs, and they are different questions.
+ *
+ *   Ask      did *this* answer disclose correctly?          a demo's question
+ *   Risk     where is this organisation exposed?            an operator's
+ *   Session  what has this person accumulated over time?    an attacker's
+ *
+ * The third exists because per-query safety does not compose: ten individually
+ * safe answers can jointly rebuild a refused claim. A console that only ever
+ * shows the current reply cannot show that, which is most of why one screen was
+ * not enough.
+ */
+type View = 'ask' | 'risk' | 'session';
 import {
   ask,
   getDerivation,
@@ -27,6 +43,7 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [derivation, setDerivation] = useState<Derivation | null>(null);
   const [filter, setFilter] = useState('');
+  const [view, setView] = useState<View>('ask');
 
   useEffect(() => {
     let cancelled = false;
@@ -139,8 +156,12 @@ export default function App() {
   return (
     <div className="app">
       <Masthead ok stats={overview?.stats} />
+      <Nav view={view} onChange={setView} />
 
-      <div className="shell">
+      {view === 'risk' && <RiskView />}
+      {view === 'session' && <SessionView asker={asker} />}
+
+      <div className="shell" hidden={view !== 'ask'}>
         {/* ---------------------------------------------------------- left */}
         <aside className="pane pane-left">
           <div className="block">
@@ -509,5 +530,36 @@ function DerivationPanel({
         ))}
       </div>
     </div>
+  );
+}
+
+
+/**
+ * View switcher.
+ *
+ * Deliberately three tabs and not a hamburger: the point being made is that
+ * these are three different questions about the same graph, and hiding two of
+ * them behind a menu would bury the argument.
+ */
+function Nav({ view, onChange }: { view: View; onChange: (v: View) => void }) {
+  const tabs: Array<{ id: View; label: string; hint: string }> = [
+    { id: 'ask', label: 'Ask', hint: 'did this answer disclose correctly' },
+    { id: 'risk', label: 'Risk surface', hint: 'where the organisation is exposed' },
+    { id: 'session', label: 'Disclosure budget', hint: 'what a session has given away' },
+  ];
+
+  return (
+    <nav className="nav">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          className={`nav-tab${view === tab.id ? ' is-active' : ''}`}
+          onClick={() => onChange(tab.id)}
+          title={tab.hint}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </nav>
   );
 }

@@ -11,6 +11,9 @@ import { HydraClient, defaultConfig } from '../hydra/client.js';
 import { buildGraph, type BuiltGraph } from '../cordon/pipeline.js';
 import { FactIndex, PermissionOracle, retrieve } from '../cordon/query.js';
 import { admissible } from '../cordon/acl.js';
+import { DisclosureLedger, plan as planDisclosure, protectedClaims } from '../cordon/planner.js';
+import { compile, grant, policyFromModel, preview, revoke, type Policy } from '../cordon/policy.js';
+import { AuditLog, summarise } from '../cordon/audit.js';
 import { corpusFromSnapshot, loadSnapshot } from '../cordon/corpus/github.js';
 import { buildVocabulary } from '../attack/mine.js';
 import { spacesNamedIn } from '../attack/model.js';
@@ -32,6 +35,49 @@ let index: FactIndex | null = null;
 let oracle: PermissionOracle | null = null;
 let buildError: string | null = null;
 let building = true;
+
+/**
+ * Requirements, resolved once at boot.
+ *
+ * The planner needs a requirement for every candidate it considers, and doing
+ * that as a traversal per candidate per request would put the graph on the
+ * critical path of every keystroke. Level-0 facts require exactly their own
+ * space, so only the few hundred derived ones need the oracle.
+ */
+const requiredByFact = new Map<string, readonly string[]>();
+
+/**
+ * Disclosure ledgers, per principal, in memory.
+ *
+ * Per-query inference safety does not compose - see docs/PLANNER.md - so the
+ * constraint has to be evaluated over everything a principal has been shown.
+ * In-memory is right for a demo and wrong for a deployment: a real one persists
+ * this, because a ledger that resets when the process restarts hands the
+ * attacker a way to clear their own budget.
+ */
+const ledgers = new Map<string, DisclosureLedger>();
+
+/**
+ * The decision log.
+ *
+ * Hash-chained, so an edited or deleted entry is detectable rather than merely
+ * discouraged - and content-free by construction, because a refusal record that
+ * carried the withheld text would be a second copy of the secret in a file more
+ * people can read than the fact. See src/cordon/audit.ts.
+ *
+ * Set CORDON_AUDIT_LOG to persist it; otherwise it lives in memory, which is
+ * right for a demo and wrong for a deployment.
+ */
+const audit = new AuditLog(
+  process.env.CORDON_AUDIT_LOG ? { path: process.env.CORDON_AUDIT_LOG } : {},
+);
+const ledgerFor = (principal: string): DisclosureLedger => {
+  const existing = ledgers.get(principal);
+  if (existing) return existing;
+  const fresh = new DisclosureLedger();
+  ledgers.set(principal, fresh);
+  return fresh;
+};
 
 const client = new HydraClient();
 
@@ -74,7 +120,12 @@ async function boot() {
     // Derived facts are the entire security surface and there are only a few
     // hundred; resolving them up front keeps every request off the slow path.
     const derived = built.facts.filter((f) => f.level >= 1);
-    for (const fact of derived) await oracle.requiredSpaces(fact.id);
+    for (const fact of derived) {
+      requiredByFact.set(fact.id, await oracle.requiredSpaces(fact.id));
+    }
+    for (const fact of built.facts) {
+      if (fact.level === 0) requiredByFact.set(fact.id, fact.requiredSpaces);
+    }
 
     console.log(
       `cordon ready: ${built.facts.length.toLocaleString()} facts indexed, ` +
@@ -284,6 +335,27 @@ app.post<{ Body: { principal?: string; facts?: GateFact[] } }>(
       }
     }
 
+    /*
+     * One entry per call, not per fact: a log with a line for every candidate
+     * in a 512-fact batch drowns the decision that mattered.
+     */
+    if (withheldOut.length > 0) {
+      audit.record({
+        decision: 'refuse',
+        principal,
+        facts: withheldOut.map((w) => w.id),
+        detail: { endpoint: '/v1/admissible', withheld: withheldOut.length, traversals },
+      });
+    }
+    if (admittedOut.length > 0) {
+      audit.record({
+        decision: 'disclose',
+        principal,
+        facts: admittedOut.map((a) => a.id),
+        detail: { endpoint: '/v1/admissible', admitted: admittedOut.length },
+      });
+    }
+
     return {
       principal,
       permitted: [...permitted],
@@ -340,6 +412,297 @@ app.get<{ Params: { id: string } }>('/api/fact/*', async (request, reply) => {
  * can prefer this and fall back to the committed transcript when the backend is
  * cold. A visitor should never see an empty page because a container is asleep.
  */
+/* -------------------------------------------------------------------------- *
+ * Inference-safe planning, as a service.
+ *
+ * `/v1/admissible` answers the per-fact question: may this principal see this
+ * fact? docs/INFERENCE.md shows that is not sufficient - what an answer leaks
+ * is a property of the *set*, and every fact in a reply can be individually
+ * admissible while the reply as a whole re-derives something the asker was
+ * refused.
+ *
+ * This endpoint answers the set question. Post the candidates your retrieval
+ * produced, in rank order; get back the subset that is safe to serve, plus the
+ * ones that were dropped and the protected claim each would have completed.
+ *
+ * `session: true` evaluates the constraint against everything this principal
+ * has already been shown, because per-query safety does not compose.
+ * -------------------------------------------------------------------------- */
+app.post<{
+  Body: { principal?: string; facts?: GateFact[]; session?: boolean };
+}>('/v1/plan', async (request, reply) => {
+  if (!built || !oracle) return reply.code(503).send({ error: buildError ?? 'building' });
+  const { principal, facts, session } = request.body ?? {};
+  if (!principal || !Array.isArray(facts)) {
+    return reply.code(400).send({ error: 'body must include "principal" and "facts"' });
+  }
+
+  const started = performance.now();
+  const permittedList = await oracle.permittedSpaces(principal);
+  const permitted = new Set(permittedList);
+
+  const byId = new Map(built.facts.map((f) => [f.id, f]));
+  const candidates: FactNode[] = [];
+  const unknown: string[] = [];
+  for (const item of facts) {
+    const fact = byId.get(item.id);
+    if (fact) candidates.push(fact);
+    else unknown.push(item.id);
+  }
+
+  const ledger = session ? ledgerFor(principal) : undefined;
+  const result = planDisclosure({
+    candidates,
+    requiredByFact,
+    permitted,
+    protectedSet: protectedClaims(built.facts, requiredByFact, permitted),
+    ...(ledger ? { ledger } : {}),
+  });
+  if (ledger) ledger.record(result.disclosed);
+
+  /*
+   * A suppression is the entry an auditor most needs and no other system can
+   * produce: a fact this principal was *entitled* to, withheld because the set
+   * would have leaked. The claim it would have completed is recorded as an
+   * identifier, never as text.
+   */
+  for (const sup of result.suppressed) {
+    audit.record({
+      decision: 'suppress',
+      principal,
+      facts: [sup.fact.id],
+      wouldComplete: sup.wouldComplete,
+      detail: { endpoint: '/v1/plan', session: !!ledger },
+    });
+  }
+  if (result.disclosed.length > 0) {
+    audit.record({
+      decision: 'disclose',
+      principal,
+      facts: result.disclosed.map((f) => f.id),
+      detail: {
+        endpoint: '/v1/plan',
+        admissible: result.stats.admissible,
+        disclosed: result.stats.disclosed,
+      },
+    });
+  }
+
+  return {
+    principal,
+    latencyMs: +(performance.now() - started).toFixed(1),
+    safe: result.safe,
+    disclosed: result.disclosed.map((f) => ({ id: f.id, text: f.text, level: f.level })),
+    inadmissible: result.inadmissible.map((f) => ({
+      id: f.id,
+      requires: requiredByFact.get(f.id) ?? f.requiredSpaces,
+      missing: (requiredByFact.get(f.id) ?? f.requiredSpaces).filter((sp) => !permitted.has(sp)),
+    })),
+    suppressed: result.suppressed.map((sup) => ({
+      id: sup.fact.id,
+      text: sup.fact.text,
+      /* Why it was dropped even though this principal is entitled to it. */
+      wouldComplete: sup.wouldComplete,
+    })),
+    violationsPrevented: result.violations,
+    stats: result.stats,
+    ...(ledger ? { ledger: { size: ledger.size, queries: ledger.queryCount } } : {}),
+    unknown,
+  };
+});
+
+/* -------------------------------------------------------------------------- *
+ * The risk surface.
+ *
+ * What an operator actually needs is not "did this one question leak" but
+ * "where is this organisation exposed". Derived facts are the entire surface -
+ * a level-0 fact is governed correctly by any document ACL - so this ranks them
+ * by how much of the organisation they are hidden from and how many spaces they
+ * bind together.
+ * -------------------------------------------------------------------------- */
+app.get('/api/risk', async (_req, reply) => {
+  if (!built) return reply.code(503).send({ error: buildError ?? 'building' });
+  const { facts, permissions, corpus } = built;
+  const principals = [...corpus.employees.keys()];
+
+  const derived = facts.filter((f) => f.level > 0);
+  const rows = derived.map((fact) => {
+    const required = requiredByFact.get(fact.id) ?? fact.requiredSpaces;
+    let audience = 0;
+    for (const p of principals) if (admissible(permissions, p, required)) audience++;
+    return {
+      id: fact.id,
+      text: fact.text,
+      level: fact.level,
+      requires: [...required],
+      audience,
+      audienceShare: +((audience / Math.max(principals.length, 1)) * 100).toFixed(2),
+    };
+  });
+
+  rows.sort((a, b) => a.audience - b.audience || b.requires.length - a.requires.length);
+
+  const byLevel = new Map<number, { count: number; audience: number }>();
+  for (const row of rows) {
+    const slot = byLevel.get(row.level) ?? { count: 0, audience: 0 };
+    slot.count++;
+    slot.audience += row.audience;
+    byLevel.set(row.level, slot);
+  }
+
+  return {
+    principals: principals.length,
+    spaces: corpus.spaces.size,
+    derivedFacts: derived.length,
+    /* Facts nobody in the organisation may read: derived past the point of use. */
+    invisible: rows.filter((r) => r.audience === 0).length,
+    byLevel: [...byLevel]
+      .sort((a, b) => a[0] - b[0])
+      .map(([level, s]) => ({
+        level,
+        facts: s.count,
+        meanAudience: +(s.audience / Math.max(s.count, 1)).toFixed(1),
+      })),
+    /* The tightest-held knowledge in the organisation, most restricted first. */
+    riskiest: rows.slice(0, 40),
+  };
+});
+
+/* -------------------------------------------------------------------------- *
+ * Policy impact preview.
+ *
+ * An administrator adds one person to one team. Every access-review tool tells
+ * them what that grants: the documents in that space. It also grants every
+ * derived fact whose *entire* requirement is now covered - facts resting on
+ * spaces they were not thinking about, because the person already had them.
+ *
+ * Nobody granted those. Nobody was asked. They are not documents, so they are
+ * invisible to a document-level review. Measured over the full corpus, **100%
+ * of the derived facts a grant discloses were unlocked in combination** with
+ * access the principal already held - see docs/POLICY.md.
+ *
+ * This computes that before the change is applied. It is the feature the whole
+ * thesis earns: you can only compute the blast radius of a grant if you have
+ * modelled derivation, and if you have, you are obliged to.
+ * -------------------------------------------------------------------------- */
+app.post<{
+  Body: {
+    grants?: Array<{ subject: string; space: string }>;
+    revokes?: Array<{ subject: string; space: string }>;
+    includeInference?: boolean;
+  };
+}>('/v1/policy/preview', async (request, reply) => {
+  if (!built) return reply.code(503).send({ error: buildError ?? 'building' });
+  const { grants = [], revokes = [], includeInference } = request.body ?? {};
+  if (grants.length === 0 && revokes.length === 0) {
+    return reply.code(400).send({ error: 'body must include at least one grant or revoke' });
+  }
+
+  const started = performance.now();
+  let policy: Policy = policyFromModel(built.permissions, 'live');
+  for (const g of grants) policy = grant(policy, g.subject, g.space);
+  for (const r of revokes) policy = revoke(policy, r.subject, r.space);
+
+  const after = compile(policy, built.corpus);
+  const impact = preview({
+    before: built.permissions,
+    after,
+    facts: built.facts,
+    requiredByFact,
+    detail: 25,
+    /* Second-order analysis runs the rule engine twice per principal; opt in. */
+    ...(includeInference ? { includeInference: true } : {}),
+  });
+
+  audit.record({
+    decision: 'policy-preview',
+    principal: grants[0]?.subject ?? revokes[0]?.subject ?? 'unknown',
+    detail: {
+      endpoint: '/v1/policy/preview',
+      grants: grants.length,
+      revokes: revokes.length,
+      derivedGained: impact.derivedGained,
+      unlockedByCombination: impact.unlockedByCombination,
+    },
+  });
+
+  return {
+    latencyMs: +(performance.now() - started).toFixed(1),
+    change: { grants, revokes },
+    impact: {
+      principalsAffected: impact.principalsAffected,
+      documentsGained: impact.documentsGained,
+      derivedGained: impact.derivedGained,
+      /* The number a document-level review cannot produce. */
+      unlockedByCombination: impact.unlockedByCombination,
+      documentsLost: impact.documentsLost,
+      derivedLost: impact.derivedLost,
+      newlyInferable: impact.newlyInferable,
+      hiddenRatio: +impact.hiddenRatio.toFixed(4),
+    },
+    perPrincipal: impact.perPrincipal,
+  };
+});
+
+/* Reset a principal's disclosure budget. An operator action, and it is logged. */
+app.post<{ Body: { principal?: string } }>('/api/session/reset', async (request, reply) => {
+  const principal = request.body?.principal;
+  if (!principal) return reply.code(400).send({ error: 'body must include "principal"' });
+  const ledger = ledgers.get(principal);
+  const had = ledger?.size ?? 0;
+  ledger?.reset();
+  audit.record({
+    decision: 'session-reset',
+    principal,
+    detail: { endpoint: '/api/session/reset', cleared: had },
+  });
+  return { principal, cleared: had };
+});
+
+app.get<{ Params: { principal: string } }>('/api/session/:principal', async (request) => {
+  const ledger = ledgers.get(request.params.principal);
+  return {
+    principal: request.params.principal,
+    size: ledger?.size ?? 0,
+    queries: ledger?.queryCount ?? 0,
+    determines: ledger ? [...ledger.closure()].length : 0,
+  };
+});
+
+/* -------------------------------------------------------------------------- *
+ * The decision log, and its verification.
+ *
+ * An append-only file is append-only until someone opens it in an editor, and
+ * the threat is not an outsider - it is an insider deleting the line that
+ * records what they did. Entries are hash-chained, so `/api/audit/verify`
+ * reports the first index where the chain fails.
+ *
+ * That does not make the log immutable. It makes tampering *detectable*, which
+ * is the property an auditor actually needs.
+ * -------------------------------------------------------------------------- */
+app.get<{ Querystring: { limit?: string } }>('/api/audit', async (request) => {
+  const limit = Math.min(Number(request.query.limit ?? 100) || 100, 1000);
+  const entries = audit.tail(limit);
+  return {
+    total: audit.size,
+    head: audit.head,
+    summary: summarise(entries),
+    /* Identifiers and requirement metadata only. Never fact text. */
+    entries,
+  };
+});
+
+app.get('/api/audit/verify', async () => {
+  const result = audit.verify();
+  return {
+    ...result,
+    /* Said plainly, because "verified" with no stated meaning is decoration. */
+    meaning: result.ok
+      ? 'every entry hashes to its recorded value and follows the previous entry'
+      : 'the log has been modified, reordered, or had an entry removed',
+  };
+});
+
 app.get('/api/capture', async (_req, reply) => {
   if (!built || !oracle) return reply.code(503).send({ error: buildError ?? 'building' });
   const { facts, permissions, corpus } = built;

@@ -94,6 +94,56 @@ space pair the fact was named for, while traversal found five. See
 
 ---
 
+## What the theorem is about — and what it is not
+
+The theorem above is about **provenance**: a disclosed fact rests only on
+sources the asker may read. It is proved, it is checked three ways below, and it
+is not the property a security reviewer is actually asking about.
+
+They are asking about **content**: when Cordon refuses, does the asker end up
+not knowing?
+
+These come apart, and the gap is not hypothetical — it is measured in
+[INFERENCE.md](INFERENCE.md). Cordon's derivation rules are deterministic and
+shipped under Apache-2.0, so an adversary runs *our own rules* over the facts we
+disclosed and rebuilds some of what we refused:
+
+```
+phantom(p) = Denied(p) ∩ closure(Permitted(p))
+```
+
+A phantom denial satisfies the theorem perfectly. Provenance was never violated:
+we did not hand the fact over. The asker knows it anyway.
+
+| depth | denied | phantom | verdict |
+|---|---|---|---|
+| 1 | 96,206 | 0 | **tight** — the requirement is exactly as strong as it needs to be |
+| 2 | 12,000 | 804 (6.7%) | phantom |
+| 3 | 12,000 | 404 (3.4%) | phantom |
+
+**Depth 1 is tight, and that is a consequence of the rule rather than luck.** A
+level-1 fact names every space its subject works in; an asker who cannot read
+one of them cannot observe the subject there, so the set they reach is strictly
+smaller and the claim does not match.
+
+**Depths 2 and 3 are not tight, and that is a consequence of a fix we were right
+to make.** `pair:A:B` asserts something about A and B alone, but inherits the
+union of every space its supports touch. We raised that requirement deliberately
+after traversal caught it under-stated — correct for provenance, worth nothing
+for content.
+
+Closing the gap is a **minimum cut**, not a stronger requirement: the asker is
+rebuilding the claim from evidence they are entitled to, and no requirement on
+the derived node reaches that evidence. The price is **37.7% of the evidence an
+asker may legitimately read**. Provenance confidentiality is free; content
+confidentiality is not.
+
+**Stating a soundness theorem without naming the property it does not cover is
+the same failure as a check that compares a value to itself.** Both are true and
+neither can fail.
+
+---
+
 ## Verification, three ways
 
 A proof about the rule says nothing about whether the implementation obeys it.
@@ -133,7 +183,7 @@ be falsified because nobody wrote down what it excludes.
 
 | not covered | status | measured in |
 |---|---|---|
-| **Compositional inference** — permitted answers jointly determining a denied fact | open | [the threat model](https://github.com/iamdflame/cordon#the-threat-model) |
+| **Compositional inference** — the asker rebuilding a denied claim by re-running our own published rules | **measured and priced**, not closed by default | [INFERENCE.md](INFERENCE.md) — 1,208 phantom denials; closing them costs 37.7% of readable evidence |
 | **Refusal as an oracle** — the refusal itself carrying information | mitigable | [the threat model](https://github.com/iamdflame/cordon#the-threat-model) |
 | **Timing** — deeper facts traverse further, so latency correlates with depth | unmeasured | — |
 | **Cross-principal collusion** — two principals pooling permitted answers | unmeasured | — |

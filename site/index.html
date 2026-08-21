@@ -350,6 +350,7 @@
       <a href="#finding">The finding</a>
       <a href="#proof">The 404</a>
       <a href="#attack">The attack</a>
+      <a href="https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n">Video</a>
       <a href="console/">Console</a>
       <a class="nav-cta" href="https://github.com/iamdflame/cordon">Source</a>
     </div>
@@ -363,12 +364,14 @@
     <p class="hero-lede">
       A fact inferred from three documents is not a document. It has no ACL of its own &mdash;
       so document-level filtering, <strong>which is what every enterprise AI assistant does</strong>,
-      has no answer for it. We measured the hole, and closed it.
+      has no answer for it. We measured the hole and closed it &mdash; then
+      <strong>attacked our own proof</strong> and published what that cost.
     </p>
     <div class="hero-actions">
       <a class="btn primary" href="console/">Open the live console &rarr;</a>
+      <a class="btn" href="https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n">Watch the pitch and demo</a>
       <a class="btn" href="https://github.com/iamdflame/cordon">Read the source</a>
-      <a class="btn" href="#finding">See the numbers</a>
+      <a class="btn" href="#turn">We attacked our own proof &rarr;</a>
     </div>
 
     <!-- The hero is the product: one fact, two people, watch it redact. -->
@@ -404,6 +407,113 @@
       </div>
     </div>
   </header>
+
+  <!-- ============================================ we attacked our own proof -->
+  <section id="turn">
+    <p class="eyebrow">00 &middot; the turn</p>
+    <h2>Then we attacked our own proof</h2>
+    <p class="lede">
+      We closed the hole and proved it sound. Then we asked the question a security
+      reviewer asks next &mdash; <em>when Cordon refuses, does the asker end up not
+      knowing?</em> &mdash; and found that <strong>our own theorem does not answer it.</strong>
+    </p>
+
+    <p class="body-text">
+      The proof is about <strong>provenance</strong>: what the system hands over. A
+      reviewer cares about <strong>content</strong>: what you end up knowing. Our
+      derivation rules ship in this repository under Apache&nbsp;2.0, so an attacker
+      does not reverse-engineer them &mdash; they <code class="mono-inline">git clone</code>
+      them. We ran <em>our own rules</em> over the facts we had disclosed.
+    </p>
+
+    <div class="table-wrap">
+      <table class="scoreboard">
+        <thead>
+          <tr><th>120,206 denials, re-derived by our own published rules</th><th>Count</th><th>Share</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Phantom</strong> &mdash; rebuilt from what we <em>did</em> disclose</td><td class="num them">1,208</td><td class="num them">1.0%</td></tr>
+          <tr><td>Effective &mdash; genuinely withheld</td><td class="num us">118,998</td><td class="num us">99.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="theorem">
+      <span class="tname">The finding &middot; unflattering, and ours</span>
+      <p>A refusal the asker can undo is not a refusal. It costs them an answer, costs
+      the operator a ticket, and returns nothing &mdash; while appearing on a dashboard
+      as protection. <strong>It is a lie the system tells its owner.</strong></p>
+    </div>
+
+    <p class="body-text">
+      Depth&nbsp;1 is tight &mdash; <strong>0 phantoms in 96,206 denials.</strong> Depths 2
+      and 3 are not, and the cause is a fix we were <em>right</em> to make: we raised a
+      requirement after traversal caught it understated. Correct for provenance, worth
+      nothing for content. Closing that gap is a <strong>minimum cut</strong>, not a
+      stronger requirement &mdash; and it costs <strong>37.7%</strong> of an asker&rsquo;s
+      legitimate evidence.
+    </p>
+
+    <p class="body-text">
+      Which would be unshippable &mdash; unless you stop deciding one fact at a time.
+      Deciding over the <strong>set</strong>, so the disclosed answer&rsquo;s closure cannot
+      rebuild anything the asker was refused:
+    </p>
+
+    <div class="table-wrap">
+      <table class="scoreboard">
+        <thead>
+          <tr><th>Retrieval depth</th><th>Plans constrained</th><th>Evidence retained</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>top-10</td><td class="num us">0</td><td class="num us">100.0%</td></tr>
+          <tr><td><strong>top-20</strong> &mdash; production depth</td><td class="num us">0 of 1,200</td><td class="num us">100.0% &mdash; free</td></tr>
+          <tr><td>top-50</td><td class="num">12</td><td class="num">97.6%</td></tr>
+          <tr><td>top-200</td><td class="num them">192</td><td class="num them">88.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="body-text">
+      <strong>Inference safety is free at production retrieval depth, and first bites at
+      k=50.</strong> A measured phase transition, not a claim. And because ten individually
+      safe answers can jointly leak, a per-principal <strong>disclosure ledger</strong>
+      carries the guarantee across a session: 100% retained at query&nbsp;1, 80.7% by
+      query&nbsp;30. Confidentiality stops being yes-or-no and becomes a budget.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <h3>What a grant actually costs</h3>
+        <p>Over 150 single grants: 713,882 documents disclosed &mdash; and 380 derived
+        facts, of which <strong>100% were unlocked in combination</strong> with access the
+        person already held. Nobody approved those. They are not documents, so no access
+        review shows them.</p>
+      </div>
+      <div class="card">
+        <h3>We tested our own hedge</h3>
+        <p>Every leak number says &ldquo;lower bound, because our adversary runs our
+        rules.&rdquo; So we pointed a language model at the denials we had called
+        protected. It recovered nothing &mdash; and we can say <em>why</em>: 0 of 16,594
+        documents name a product area other than their own. That measures the corpus,
+        not our defence.</p>
+      </div>
+      <div class="card">
+        <h3>The log must not become the leak</h3>
+        <p>A refusal record carrying the withheld text is a second copy of the secret in
+        a file more people can read. Cordon&rsquo;s log stores identifiers only and
+        <em>refuses at write time</em> to store content. It is hash-chained, so an edited
+        or deleted entry is detectable &mdash; verified against four kinds of forgery.</p>
+      </div>
+    </div>
+
+    <p class="body-text narrow">
+      <a href="https://github.com/iamdflame/cordon/blob/main/docs/INFERENCE.md">Provenance is not content</a> &middot;
+      <a href="https://github.com/iamdflame/cordon/blob/main/docs/PLANNER.md">Inference-safe planning</a> &middot;
+      <a href="https://github.com/iamdflame/cordon/blob/main/docs/POLICY.md">What a grant costs</a> &middot;
+      <a href="https://github.com/iamdflame/cordon/blob/main/docs/LLM-ADVERSARY.md">Testing our own lower bound</a>
+    </p>
+  </section>
 
   <!-- ================================================== the finding -->
   <section id="finding">
@@ -584,7 +694,9 @@ hands over the fact derived from it.</span>
     <div class="cards">
       <div class="card">
         <h3>Compositional inference</h3>
-        <p>Open, measured. A denied fact&rsquo;s claims are partly reachable from permitted ones. Recovery falls as depth rises &mdash; Cordon degrades most gracefully where the explicit channel is most dangerous.</p>
+        <p>Measured <em>and priced</em>. 1,208 of 120,206 denials are rebuilt by our own
+        published rules. Closing them is a minimum cut costing 37.7% of readable evidence
+        globally &mdash; and <strong>0%</strong> per answer at production retrieval depth.</p>
       </div>
       <div class="card">
         <h3>Refusal as an oracle</h3>
@@ -699,6 +811,7 @@ hands over the fact derived from it.</span>
       <div class="foot-col">
         <h4>Try it</h4>
         <a href="console/">Live disclosure console</a>
+        <a href="https://youtu.be/RuAPOABnMBY?si=K37HDNN60VXvVm9n">Pitch and demo video</a>
         <a href="https://github.com/iamdflame/cordon">Source on GitHub</a>
         <a href="https://github.com/iamdflame/cordon#running-it">One-command setup</a>
       </div>

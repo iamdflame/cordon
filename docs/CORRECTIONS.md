@@ -167,6 +167,92 @@ nothing is comparable rather than printing a reassuring number.
 
 ---
 
+## 9. Believing a sound proof meant the asker did not know
+
+**The claim.** Cordon's soundness theorem, proved by induction and checked
+exhaustively over 330,190 pairs: a disclosed fact rests only on sources the
+asker may read. We presented it as *the* confidentiality result.
+
+**What was wrong.** The theorem is about **provenance** — what the system hands
+over. A reviewer is asking about **content** — what the asker ends up knowing.
+We had been treating a proof of the first as evidence for the second, and they
+come apart.
+
+**How it was found.** By writing the adversary instead of describing it. Our
+derivation rules ship under Apache-2.0, so an attacker does not reverse-engineer
+them — they clone them. Running *our own rules* over the facts we had disclosed
+rebuilt **1,208 denied claims in 120,206**: refusals that satisfy the theorem
+perfectly and protect nothing.
+
+**What it cost.** The finding traces to a fix we were right to make. An earlier
+build declared `req(pair:A:B) = {A, B}`; traversal found five, and we raised it
+— correctly, because under-stating a requirement fails open. But `pair:A:B`
+asserts something about A and B *alone*, so raising the requirement to five
+spaces was **correct for provenance and worth nothing for content**. Depth 1 is
+tight (0 phantoms in 96,206). Depths 2 and 3 are not (6.7% and 3.4%).
+
+Closing them is a minimum cut on the derivation hypergraph, not a stronger
+requirement, and it costs **37.7% of the evidence an asker may legitimately
+read**. We ship it as a measurement rather than a default.
+
+**A second correction inside the first.** `test/closure.test.ts` checks the cuts
+against brute force, and **failed on its first run** — solver 1, brute force
+∞. The solver was right; the test had granted the asker full permission, under
+which the fact is simply disclosed and no cut of the evidence can touch it. The
+comment recording that is still in the file, because a test that has never
+failed has not been shown to work.
+
+**The lesson.** *A refusal the asker can undo is not a refusal.* Every access
+control claim should say which of the two properties it means, and a system that
+measures only provenance will report protection it does not have.
+
+Fixed in [`docs/INFERENCE.md`](INFERENCE.md), `src/cordon/closure.ts`,
+`src/bench/inference.ts`, `test/closure.test.ts`.
+
+---
+
+## 10. An adversary handed an empty hand, and scored as a defence
+
+**The claim.** The first run of the LLM adversary reported 0% recall and 0%
+false positives against 60 probes, and the audit printed *"the bound holds
+against this adversary."*
+
+**What was wrong.** Two things, and the second is worse.
+
+The probe selected the attacker's evidence with `space === a || space === b`.
+But these were *effective* denials — denials that are effective **precisely
+because the principal cannot read one of the two spaces.** So the filter handed
+the model documents from one side only. It answered *"these documents do not
+mention ForecastForce"* sixty times, correctly, and we scored that as our
+defence working.
+
+Worse: the verdict logic computed `advantage = recall − falsePositiveRate` and
+treated `0 − 0 = 0` as a pass. **An adversary that answers NO to everything is
+as uninformative as one that answers YES to everything**, and the scoring could
+not tell them apart.
+
+**How it was found.** By reading what the model actually said instead of only
+its score. The justifications were all the same sentence, which is not what a
+model that is genuinely uncertain produces.
+
+**What it cost.** Both are fixed: evidence is now selected by what the text
+*says* rather than which space it sits in, and degenerate adversaries are
+reported as **inconclusive** rather than scored.
+
+**And the honest result is still a null.** The corrected probe also recovered
+nothing — but now we can say why, with a number: **0 of 16,594 level-0 facts
+name a product area other than their own.** The prose channel we hypothesised
+does not exist in HERB. That measures the corpus, not the defence, and the
+lower-bound caveat therefore stands as *untested here* rather than disproved.
+
+**The lesson.** A null result is worthless until you can tell *"the defence
+held"* apart from *"there was nothing there to find."* Measure the channel
+before you claim to have closed it.
+
+Fixed in `src/bench/llm-adversary.ts`, [`docs/LLM-ADVERSARY.md`](LLM-ADVERSARY.md).
+
+---
+
 ## Results that are not wins
 
 Reported here rather than left for a reader to notice.

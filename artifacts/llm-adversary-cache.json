@@ -1,0 +1,222 @@
+{
+  "ec4fe6b94e200c17d06b13a59283509a": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"ForecastForce,\" so it cannot be determined if any of the same people work on both areas.",
+    "promptChars": 3349
+  },
+  "caadf065fdf5c65fbc5ee8e32bb6810b": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention any individuals associated with \"ForecastForce,\" so it cannot be determined if any of the same people work in both areas.",
+    "promptChars": 3256
+  },
+  "83b9b321003fba97fef140e9df7300c8": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"ForecastForce,\" so it cannot be determined if any of the same people work on both areas.",
+    "promptChars": 3338
+  },
+  "4c7524beaa9290f083342a4655f0eccc": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SummarizeForce,\" so it cannot be determined if any of the same people work in both areas.",
+    "promptChars": 3339
+  },
+  "d845f6a3270e4e21631d3dbbc9435ffb": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SummarizeForce,\" so it cannot be determined if any of the same people work on both areas.",
+    "promptChars": 3350
+  },
+  "a5a9027e20c25424d13317e9234b0431": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SearchFlow,\" so it cannot be determined if any of the same people work on both \"VizForce\" and \"SearchFlow.\"",
+    "promptChars": 3016
+  },
+  "44e9c5bf549d4ad86759a96e948db313": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"ActionGenie,\" so a comparison cannot be made.",
+    "promptChars": 3347
+  },
+  "6fd420099fe9bfdb79dfcb3e627cc489": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working in both \"InsightForce\" and \"SearchFlow.\"",
+    "promptChars": 3335
+  },
+  "fa0d443d7271fe4ef04369e5cfb47a2b": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"ActionGenie,\" so it cannot be determined if any of the same people work on both \"InsightForce\" and \"ActionGenie.\"",
+    "promptChars": 3336
+  },
+  "fdab569f8dfcfae718cf119d003c2de0": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"SummarizeForce,\" so a comparison cannot be made.",
+    "promptChars": 3020
+  },
+  "dfff0f85e7d472701a189d77d3a53192": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working in both \"AnomalyForce\" and \"SearchFlow.\"",
+    "promptChars": 3346
+  },
+  "82f65f4c490832655a95429201b597a5": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention any individuals associated with \"ActionGenie,\" so it cannot be determined if any of the same people work on both \"ActionGenie\" and \"VizForce.\"",
+    "promptChars": 3017
+  },
+  "0c08c0edadb2c3e21609a7d77a88508f": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"ActionGenie.\"",
+    "promptChars": 3017
+  },
+  "f2728de1f03b162d3ba4e4038bf95c56": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"ActionGenie,\" so it cannot be determined if any of the same people work in both areas.",
+    "promptChars": 3254
+  },
+  "8c8d88b034f2498fc4881c09c69e0200": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SummarizeForce,\" so it cannot be determined if any of the same people work on both areas.",
+    "promptChars": 3257
+  },
+  "2c297191f36069c3e997ccdd0e86b27f": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"SearchFlow,\" so it cannot be determined if any of the same people work on both \"SearchFlow\" and \"AnomalyForce.\"",
+    "promptChars": 3346
+  },
+  "7a12cc0ff211cbad3715e581eafced5b": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"ActionGenie,\" so it cannot be determined if any of the same people work on both \"ActionGenie\" and \"CollaborateForce.\"",
+    "promptChars": 3254
+  },
+  "a56cb2e26f410cf57b0c20ae5a29a606": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"SummarizeForce,\" so a comparison cannot be made.",
+    "promptChars": 3350
+  },
+  "eaebc48f588a70c1e859b8537a2405cc": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"SearchFlow,\" so a comparison cannot be made.",
+    "promptChars": 3016
+  },
+  "352ae1367ecac9cfed42ba465bfb18df": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SearchFlow,\" so it cannot be determined if any of the same people work on both \"SearchFlow\" and \"CollaborateForce.\"",
+    "promptChars": 3253
+  },
+  "449312b8cb75bef52949ab51d3e4a59a": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SummarizeForce,\" so it cannot be determined if any of the same people work on both areas.",
+    "promptChars": 3339
+  },
+  "114264dd3dad8d8212dbfb004ec9ab25": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not provide any information about individuals working on \"ActionGenie,\" so it cannot be determined if any of the same people work on both \"AnomalyForce\" and \"ActionGenie.\"",
+    "promptChars": 3347
+  },
+  "fbbc8e036fd34060cc8460e14535d520": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention \"ForecastForce\" or any individuals associated with it, so there is no basis to determine if any individuals work on both \"AnomalyForce\" and \"ForecastForce.\"",
+    "promptChars": 3747
+  },
+  "bdad0689878d807c3a87223e8629d4f8": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents only reference \"CollaborateForce\" and do not mention \"ForecastForce\" or any individuals associated with it.",
+    "promptChars": 3447
+  },
+  "2b1ff1471e5371a3a9a4df1ae76787c4": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"ForecastForce\" or any individuals associated with it, only referencing \"InsightForce.\"",
+    "promptChars": 2962
+  },
+  "194766cac1c6c886adee79b68f6d65df": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"SummarizeForce\" or any individuals associated with it, so no comparison can be made.",
+    "promptChars": 2963
+  },
+  "b59659bc9050c1e9c5b1392d6512eb6d": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"SummarizeForce\" or any individuals associated with it.",
+    "promptChars": 3748
+  },
+  "00d99a328f576d4514cc59bcd9923282": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents only reference individuals working on \"VizForce\" and do not mention \"SearchFlow\" or any individuals associated with it.",
+    "promptChars": 3045
+  },
+  "34b17aceace1e0f45e44b66306290d6a": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention any individuals associated with \"ActionGenie,\" so it cannot be determined if any of the same people work on both projects.",
+    "promptChars": 3745
+  },
+  "b70c6cda52e746d198f0ea6ac3ceca8c": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention any individuals associated with \"SearchFlow,\" so it cannot be determined if any of the same people work on both \"InsightForce\" and \"SearchFlow.\"",
+    "promptChars": 2959
+  },
+  "68ac2b80c3c0cdea67c9e8141a1b89c9": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"ActionGenie\" or any individuals associated with it, so there is no evidence to determine if any of the same people work on both \"InsightForce\" and \"ActionGenie.\"",
+    "promptChars": 2960
+  },
+  "f01478c9a277adc8fd99cbe10cc83146": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents only reference \"VizForce\" and do not mention \"SummarizeForce\" or any individuals associated with it.",
+    "promptChars": 3049
+  },
+  "77275edb88e7d102db388e3f7196d543": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention any individuals associated with \"SearchFlow,\" so it cannot be determined if any of the same people work on both \"AnomalyForce\" and \"SearchFlow.\"",
+    "promptChars": 3744
+  },
+  "c022396dd2861067ec2aefe1bc745d2f": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided only reference individuals working on \"VizForce\" and do not mention \"ActionGenie\" or any individuals associated with it.",
+    "promptChars": 3046
+  },
+  "653de535e5f1cd6639bc3d5763999712": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents only reference individuals working on \"VizForce\" and do not mention \"ActionGenie\" or any individuals associated with it.",
+    "promptChars": 3046
+  },
+  "f351ca324e40fac747183cbb7de97509": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"ActionGenie\" or any individuals associated with it, so no comparison can be made.",
+    "promptChars": 3445
+  },
+  "35ac0fa7bff2d8869964820d61c168c8": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents only reference \"CollaborateForce\" and do not mention \"SummarizeForce\" or any individuals associated with it.",
+    "promptChars": 3448
+  },
+  "775e2dd3410f433a269a0f76d69630c7": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention any individuals associated with \"SearchFlow,\" so it cannot be determined if any of the same people work on both \"SearchFlow\" and \"AnomalyForce.\"",
+    "promptChars": 3744
+  },
+  "a4fae7bc5057bce285ba54ec26ded6e6": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"ActionGenie\" or any individuals associated with it, so it cannot be determined if anyone works on both products.",
+    "promptChars": 3445
+  },
+  "efdb263c8a8f483ff00cdff253247fd1": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"SummarizeForce\" or any individuals associated with it, so there is no basis to determine if the same people work on both projects.",
+    "promptChars": 3748
+  },
+  "9ccf523e3696670560a0718f78a9d3db": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided only reference individuals working on \"VizForce\" and do not mention \"SearchFlow\" or any individuals associated with it.",
+    "promptChars": 3045
+  },
+  "471269ae0818809109eb412cd9e6bc45": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents only reference individuals working on CollaborateForce, with no mention of \"SearchFlow\" or any individuals associated with it.",
+    "promptChars": 3444
+  },
+  "a7a30672b700afe01f298cef70a39eb2": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents do not mention \"SummarizeForce\" or any individuals associated with it, so it cannot be determined if any of the same people work on both areas.",
+    "promptChars": 2963
+  },
+  "055ac24d1a42c2aae48b50eea3bf1bfe": {
+    "model": "gpt-4o-mini",
+    "answer": "NO  \nThe documents provided do not mention any individuals associated with \"ActionGenie,\" so it cannot be determined if any of the same people work on both \"AnomalyForce\" and \"ActionGenie.\"",
+    "promptChars": 3745
+  }
+}
