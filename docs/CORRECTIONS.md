@@ -253,6 +253,51 @@ Fixed in `src/bench/llm-adversary.ts`, [`docs/LLM-ADVERSARY.md`](LLM-ADVERSARY.m
 
 ---
 
+## 11. Planning a result that was arithmetically impossible
+
+**The claim.** The obvious next step was a gated answerer: feed a reader only
+`Admissible(p)`, and publish a table where Cordon *beats* the document-ACL
+baseline on answer quality while leaking nothing. It was going to be the
+headline.
+
+**What was wrong.** It cannot happen, and one measurement would have shown that
+before any of it was built.
+
+A derived fact is filed under one of the spaces it requires, so
+`space(f) ∈ req(f)` — **623 of 623**. That makes
+`admissible_Cordon(f,p) ⇒ admissible_documentACL(f,p)`: our disclosure set is a
+**strict subset** of the baseline's. Over 150 principals there are 9,106
+(fact, principal) pairs the baseline serves and we refuse — every one a leak —
+and **zero** we serve and it does not.
+
+So `F1(Cordon) ≤ F1(document-ACL)` is a theorem. A better answerer lifts both
+arms identically. There is no reader clever enough to beat a superset.
+
+**How it was found.** By checking whether the intended result was reachable
+before building the thing intended to produce it — 40 lines, run once, five
+minutes. The alternative was building a gated answerer, watching the number fail
+to move, and inventing a reason.
+
+**What it cost.** Nothing, because it was caught first. It also reframed the
+existing result for the better: **0.099 on both arms is not a weak tie, it is
+the strongest available outcome.** On entitled questions the systems are
+identical; the baseline only pulls ahead by answering what it should have
+refused.
+
+**And it pointed at the only direction left.** A subset can still win by making
+a move the superset does not have. Document-level filtering has no derivation
+lattice, so it cannot offer *the weaker true claim beneath a refusal*. That is
+[DEGRADE.md](DEGRADE.md), and it recovers 1.2% of refusals at full scale — a
+modest number, published as one, next to the 20.8% the same code reaches on a
+denser sample.
+
+**The lesson.** Before building the experiment, check the result is reachable.
+An impossible target is not discovered by trying harder at it.
+
+Fixed in `src/cordon/degrade.ts`, `src/bench/degrade.ts`, [`docs/DEGRADE.md`](DEGRADE.md).
+
+---
+
 ## Results that are not wins
 
 Reported here rather than left for a reader to notice.

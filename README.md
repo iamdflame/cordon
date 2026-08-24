@@ -117,11 +117,83 @@ begins. Every session across the audit verified safe.
 [**Provenance is not content**](docs/INFERENCE.md) ·
 [**Inference-safe planning**](docs/PLANNER.md) ·
 [**Testing our own lower bound**](docs/LLM-ADVERSARY.md) ·
-[**What a grant costs**](docs/POLICY.md) · [Results](docs/RESULTS.md) ·
+[**What a grant costs**](docs/POLICY.md) ·
+[**The weaker true answer**](docs/DEGRADE.md) · [Results](docs/RESULTS.md) ·
 [**The aggregation attack**](docs/ATTACK.md) · [**What we got wrong**](docs/CORRECTIONS.md) ·
 [Real GitHub permissions](docs/RESULTS-GITHUB.md) · [Disclosure-dependent truth](docs/CONTESTED.md) ·
 [Soundness](docs/SOUNDNESS.md) · [**HydraDB capability map**](docs/HYDRADB-ENGINE-NOTES.md) ·
 [DKL benchmark](bench/dkl/) · [Demo guide](docs/DEMO.md)
+
+---
+
+## The ceiling on our own comparison
+
+The obvious next move is a gated answerer — feed a reader only `Admissible(p)`
+and show Cordon out-scoring the document-ACL baseline. **We measured whether
+that is possible before building it, and it is not.**
+
+A derived fact is filed under one of the spaces it requires, so
+`space(f) ∈ req(f)` — **623 of 623**. Therefore:
+
+```
+admissible_Cordon(f, p)  ⇒  admissible_documentACL(f, p)
+```
+
+Over 150 principals:
+
+| | (fact, principal) pairs |
+|---|---|
+| both systems serve | 3,826 |
+| **document-ACL only** | **9,106** — every one a leak |
+| **Cordon only** | **0** |
+
+**Cordon's disclosure set is a strict subset of the baseline's, so F1(Cordon) ≤
+F1(document-ACL) is a theorem, not an accident.** No answerer — LLM or
+extractive — can change that; a better reader lifts both arms identically. The
+baseline's entire utility edge is those 9,106 leaks.
+
+That is why the headline table reports **0.099 on both**: not a weak result, but
+the strongest one available. On questions the asker is *entitled* to, the two
+systems tie. The baseline only pulls ahead by answering questions it should have
+refused.
+
+### The one move it does not have
+
+The subset property leaves exactly one direction open: a move document-level
+filtering cannot make, because it has no derivation lattice to walk.
+
+```
+denied:  "A, B and C form a mutually staffed cluster"   requires {A,B,C,D,E}
+served:  "people contribute to both A and B"            requires {A,B}
+```
+
+The second is **true**, **strictly weaker**, and **independently admissible** —
+the asker could have obtained it by asking. So Cordon answers instead of dead-
+ending, and the soundness theorem is untouched.
+
+| depth | refusals | recovered | rate |
+|---|---|---|---|
+| 1 | 71,624 | 0 | 0.0% |
+| 2 | 9,000 | 408 | 4.5% |
+| 3 | 9,000 | 680 | **7.6%** |
+| **all** | **89,624** | **1,088** | **1.2%** |
+
+**Recovery rises with depth, which is the shape the objection predicts.** Depth-3
+facts have the worst audience collapse *and* the shortest distance to a claim
+the asker can actually have. Depth 1 recovers nothing, because beneath a level-1
+fact there is only source text.
+
+**1.2% is a modest number and we are publishing it as one.** On a denser
+six-space sample the same code recovers **20.8%** — the feature's value scales
+with how much access actually overlaps, and on the full 30-space corpus most
+askers cannot reach even the weaker claim. Reporting the sample figure as the
+headline would have been the flattering choice.
+
+Safety is exact: **0 substitutes were not independently admissible, 0 were not
+strictly weaker**, across all 89,624 refusals. Degradation changes what Cordon
+*volunteers*, never what it is willing to disclose.
+
+> **[The full result → docs/DEGRADE.md](docs/DEGRADE.md)** · `npm run audit:degrade`
 
 ---
 
@@ -235,6 +307,7 @@ corpus digest and the seed.
 | **Set-level safety: free at k=20, bites at k=50** | `npm run audit:planner` | [PLANNER.md](docs/PLANNER.md) |
 | **We point an LLM at our own lower bound** | `npm run audit:llm` | [LLM-ADVERSARY.md](docs/LLM-ADVERSARY.md) |
 | **100% of a grant's derived disclosures are invisible** | `npm run audit:policy` | [POLICY.md](docs/POLICY.md) |
+| **Cordon ⊆ document-ACL, and the one move it leaves open** | `npm run audit:degrade` | [DEGRADE.md](docs/DEGRADE.md) |
 | Refusal as an oracle, measured in bits | `npm run audit:channels` | [the threat model](#the-threat-model) &mdash; the audit also writes a standalone `docs/THREAT-MODEL.md` |
 | Disclosure-dependent truth | `npm run audit:contested` | [CONTESTED.md](docs/CONTESTED.md) |
 | What query-time traversal costs | `npm run bench:latency` | stdout |
@@ -1073,6 +1146,7 @@ npm run audit:inference          # we attack our own proof: 1,208 phantom denial
 npm run audit:planner            # the planner that makes the fix shippable
 npm run audit:llm                # we point an LLM at our own lower bound
 npm run audit:policy             # what one grant actually discloses
+npm run audit:degrade            # the ceiling on our own comparison, and the way past it
 npm run report                   # gate every property; non-zero on regression
 npm run audit:github             # real permissions; no credentials needed
 npm run audit:channels           # the channels our own defence opens
@@ -1200,6 +1274,8 @@ src/
                        per-principal ledger that makes it hold across a session
              policy — editable policy, compiled to the enforced model, with
                       impact preview: what a grant actually costs
+             degrade — the weaker true claim beneath a refusal, when the
+                       lattice offers one
              audit — hash-chained decision log that refuses to store content
              contradict — deterministic contest detection
              corpus/github — permissions fetched from a real system
@@ -1208,6 +1284,7 @@ src/
              planner — what set-level safety costs per query, per session,
                        and at every retrieval depth
              policy — the blast radius of one grant, measured
+             degrade — the subset ceiling, and what the lattice recovers
              report-card — gates every property; exits non-zero on regression
              llm-adversary — a stronger attacker, cached so it reproduces
              channels — compositional and refusal side channels
