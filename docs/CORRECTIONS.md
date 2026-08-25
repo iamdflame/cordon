@@ -298,6 +298,43 @@ Fixed in `src/cordon/degrade.ts`, `src/bench/degrade.ts`, [`docs/DEGRADE.md`](DE
 
 ---
 
+## 12. An ingest that duplicated the graph on every re-run
+
+**The claim.** Nothing explicit — which is the problem. `buildEdgeStatement`
+emitted `CREATE`, and nobody had asked what happens when a statement runs twice.
+
+**What was wrong.** Everything, on a re-run. Measured against the live engine:
+
+```
+the same one-hop MERGE, three times  ->  1 edge
+the same one-hop CREATE, three times ->  3 edges
+```
+
+So any repeated ingest silently multiplied the graph. Duplicate `RESTS_ON`
+edges are not cosmetic: the requirement traversal walks them, and a graph whose
+edges are wrong is a graph whose *requirements* may be wrong.
+
+**How it was found.** By building resumable ingest and writing the guard first.
+`verifyIdempotent` refuses to start a resumable run when any statement is not
+replay-safe — and the very first thing it did was refuse our own plan, naming
+two offending statements.
+
+**What it cost.** Nothing, because the guard ran before the resume did. Had we
+shipped resume without it, a crashed ingest would have recovered by duplicating
+up to a flush-window of edges — a corruption path dressed as a recovery feature.
+
+**The fix.** `MERGE`, not `CREATE`. The engine rejects `MERGE` on a bare node
+and rejects any `MERGE` with a trailing clause, but accepts exactly the one-hop
+edge pattern we emit — so the swap was one line, and it is now checked by
+`test/checkpoint.test.ts` against the statements `planIngest` really produces.
+
+**The lesson.** Write the guard before the feature it guards. If we had built
+resume first and the check second, the check would have been written to pass.
+
+Fixed in `src/hydra/client.ts`, `src/cordon/checkpoint.ts`, `test/checkpoint.test.ts`.
+
+---
+
 ## Results that are not wins
 
 Reported here rather than left for a reader to notice.

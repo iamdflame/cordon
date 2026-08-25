@@ -16,11 +16,22 @@
 import { HydraClient, pooled } from '../hydra/client.js';
 import { NodeIdRegistry } from '../hydra/ids.js';
 import { L, R, ids, type Corpus, type FactNode } from './model.js';
+import { runResumable, verifyIdempotent, type Progress } from './checkpoint.js';
 
 export interface IngestOptions {
   client: HydraClient;
   registry: NodeIdRegistry;
   concurrency?: number;
+  /**
+   * Enable checkpointed, resumable writes.
+   *
+   * Without this the straight-through path runs, which is right for a 400-edge
+   * fixture and wrong for 226,357 edges against an engine that is known to fall
+   * over at 80%.
+   */
+  checkpointPath?: string;
+  /** Progress with rate, ETA and resume count. Only fires on the resumable path. */
+  onResumableProgress?: (progress: Progress) => void;
   /** Max ABOUT edges per fact; entity fan-out is the largest cost. */
   maxEntitiesPerFact?: number;
   onProgress?: (done: number, total: number) => void;
@@ -227,13 +238,68 @@ export interface IngestStats {
   durationMs: number;
   edgesPerSecond: number;
   counts: Record<string, number>;
+  /** Statements skipped because a previous run had already landed them. */
+  resumedFrom: number;
+  /** Transient write failures that were retried rather than fatal. */
+  retries: number;
 }
 
+/**
+ * Write the plan, surviving the failure this engine is known to produce.
+ *
+ * The comment in cli.ts records that the OSS evictor saturates under sustained
+ * write pressure and **exits 255 around 80% of a 226k-edge ingest**. That is a
+ * reproducible ~48-minute failure, and the previous recovery was to start the
+ * hour over - which is not something an operator can be asked to do.
+ *
+ * Ingest is now checkpointed and idempotent, so a crash costs the seconds since
+ * the last flush. Set `checkpointPath` to enable it; without one the old
+ * straight-through path is used, which keeps existing callers working.
+ */
 export async function runIngest(plan: IngestPlan, options: IngestOptions): Promise<IngestStats> {
   const started = performance.now();
   const { client, concurrency = 16 } = options;
 
-  await pooled(plan.statements, concurrency, (stmt) => client.query(stmt), options.onProgress);
+  let resumed = 0;
+  let retries = 0;
+  let failed: Array<{ index: number; error: string }> = [];
+
+  if (options.checkpointPath) {
+    /*
+     * Refuse to resume a plan that is not replay-safe. Every statement
+     * planIngest emits is a MERGE; if that ever stops being true, resuming
+     * would double-write, and the requirement traversal reads those edges - so
+     * a duplicate is a security bug, not a tidiness one.
+     */
+    const idempotent = verifyIdempotent(plan.statements);
+    if (!idempotent.ok) {
+      throw new Error(
+        `refusing to run a resumable ingest: ${idempotent.offenders.length} statement(s) are not ` +
+          `idempotent (first at index ${idempotent.offenders[0]}). Replaying one would duplicate edges.`,
+      );
+    }
+
+    const result = await runResumable({
+      statements: plan.statements,
+      run: (statement: string) => client.query(statement),
+      checkpointPath: options.checkpointPath,
+      concurrency,
+      ...(options.onResumableProgress ? { onProgress: options.onResumableProgress } : {}),
+    });
+    resumed = result.skipped;
+    retries = result.retries;
+    failed = result.failed;
+
+    if (failed.length > 0) {
+      throw new Error(
+        `${failed.length} statement(s) exhausted their retries; the checkpoint is intact, ` +
+          `so re-running resumes from ${result.completed}/${plan.statements.length}. ` +
+          `First failure: ${failed[0]!.error.slice(0, 160)}`,
+      );
+    }
+  } else {
+    await pooled(plan.statements, concurrency, (stmt) => client.query(stmt), options.onProgress);
+  }
 
   const durationMs = Math.round(performance.now() - started);
   return {
@@ -242,5 +308,7 @@ export async function runIngest(plan: IngestPlan, options: IngestOptions): Promi
     durationMs,
     edgesPerSecond: Math.round((plan.statements.length / Math.max(durationMs, 1)) * 1000),
     counts: plan.counts,
+    resumedFrom: resumed,
+    retries,
   };
 }

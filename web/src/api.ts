@@ -166,3 +166,50 @@ export const resetSession = (principal: string) =>
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ principal }),
   });
+
+/* -------------------------------------------------- policy impact preview */
+
+export interface PolicyImpact {
+  principalsAffected: number;
+  documentsGained: number;
+  /** Invisible to any document-level access review. */
+  derivedGained: number;
+  /** Of those, unlocked only in combination with access already held. */
+  unlockedByCombination: number;
+  documentsLost: number;
+  derivedLost: number;
+  /** Still-refused claims the change puts within rebuilding distance. */
+  newlyInferable: number;
+  hiddenRatio: number;
+}
+
+export interface PrincipalImpact {
+  principal: string;
+  spacesGained: string[];
+  spacesLost: string[];
+  documentsGained: number;
+  derivedGained: number;
+  unlockedByCombination: number;
+  newlyInferable: string[];
+}
+
+export interface PolicyPreview {
+  latencyMs: number;
+  change: {
+    grants: Array<{ subject: string; space: string }>;
+    revokes: Array<{ subject: string; space: string }>;
+  };
+  impact: PolicyImpact;
+  perPrincipal: PrincipalImpact[];
+}
+
+export const previewPolicy = (
+  grants: Array<{ subject: string; space: string }>,
+  revokes: Array<{ subject: string; space: string }> = [],
+  includeInference = true,
+) =>
+  json<PolicyPreview>('/v1/policy/preview', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ grants, revokes, includeInference }),
+  });

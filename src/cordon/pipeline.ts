@@ -32,6 +32,14 @@ export interface BuildOptions {
   concurrency?: number;
   /** Plan only: report the edge count without writing. */
   dryRun?: boolean;
+  /**
+   * Where to keep the ingest checkpoint, enabling resume.
+   *
+   * The engine is documented to exit 255 around 80% of a 226k-edge write. With
+   * a checkpoint, a crash costs the seconds since the last flush instead of the
+   * hour. Statements are MERGE, so replaying one is a no-op.
+   */
+  checkpointPath?: string;
   skipIngest?: boolean;
   onProgress?: (phase: string, done: number, total: number, detail?: string) => void;
 }
@@ -108,9 +116,28 @@ export async function buildGraph(options: BuildOptions): Promise<BuiltGraph> {
       client: options.client,
       registry,
       ...(options.concurrency !== undefined ? { concurrency: options.concurrency } : {}),
+      ...(options.checkpointPath ? { checkpointPath: options.checkpointPath } : {}),
       onProgress: (done, total) => report('ingest', done, total),
+      onResumableProgress: (p) => {
+        const eta = p.etaSeconds > 0 ? ` eta ${Math.round(p.etaSeconds / 60)}m` : '';
+        const resumed = p.skipped > 0 ? ` resumed +${p.skipped.toLocaleString()}` : '';
+        const retried = p.retries > 0 ? ` retries ${p.retries}` : '';
+        report(
+          'ingest',
+          p.done,
+          p.total,
+          `${p.done.toLocaleString()}/${p.total.toLocaleString()} @ ${Math.round(p.ratePerSecond)}/s${eta}${resumed}${retried}`,
+        );
+      },
     });
-    report('ingest', ingest.edges, ingest.edges, `${ingest.edges.toLocaleString()} edges @ ${ingest.edgesPerSecond}/s`);
+    const resumeNote = ingest.resumedFrom > 0 ? `, resumed from ${ingest.resumedFrom.toLocaleString()}` : '';
+    const retryNote = ingest.retries > 0 ? `, ${ingest.retries} retried` : '';
+    report(
+      'ingest',
+      ingest.edges,
+      ingest.edges,
+      `${ingest.edges.toLocaleString()} edges @ ${ingest.edgesPerSecond}/s${resumeNote}${retryNote}`,
+    );
   } else if (options.skipIngest) {
     // Re-interning reproduces the id mapping the write phase created.
     report('ingest', 1, 1, 'attached to existing graph');

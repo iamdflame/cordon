@@ -38,6 +38,19 @@ async function main() {
    */
   const concurrencyArg = args.find((a) => a.startsWith('--concurrency='));
   const concurrency = concurrencyArg ? Number(concurrencyArg.split('=')[1]) : 8;
+
+  /*
+   * Checkpointed writes, on by default.
+   *
+   * The engine exits 255 around 80% of a full ingest, and before this the only
+   * recovery was to start the hour again. Statements are MERGE, so a resumed
+   * run replays nothing it does not have to. `--no-resume` restores the old
+   * straight-through path.
+   */
+  const checkpointArg = args.find((a) => a.startsWith('--checkpoint='));
+  const checkpointPath = args.includes('--no-resume')
+    ? undefined
+    : (checkpointArg?.split('=')[1] ?? '.cordon/ingest-checkpoint.json');
   const spaces = isSample ? 3 : spacesArg ? Number(spacesArg.split('=')[1]) : undefined;
 
   const client = new HydraClient();
@@ -56,6 +69,7 @@ async function main() {
     concurrency,
     ...(spaces !== undefined ? { spaces } : {}),
     ...(dryRun ? { dryRun: true } : {}),
+    ...(checkpointPath ? { checkpointPath } : {}),
     onProgress: (phase, done, total, detail) => {
       if (detail) {
         if (lastPhase === 'ingest') process.stdout.write('\n');

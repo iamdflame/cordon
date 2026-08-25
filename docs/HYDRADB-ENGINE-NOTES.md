@@ -7,6 +7,7 @@ Written while hitting each limit, so the next person hits none of them.
 
 | # | issue | severity |
 |---|---|---|
+| **`MERGE` is supported, but only as a bare one-hop edge pattern** — `MERGE (a)-[:R]->(b)` works; `MERGE (a:N {..})` alone returns `only one-hop edge patterns are executable in Query engine MERGE`, and any trailing clause returns `MERGE with following clauses is not executable` | Idempotent writes are available, which is what makes a crashed ingest resumable — but only in exactly the shape our edge builder already emits | Verified against the running engine: the same one-hop `MERGE` run three times yields **1** edge, the same `CREATE` yields **3**. We switched `buildEdgeStatement` to `MERGE` on the strength of that measurement |
 | [115](https://github.com/hydra-db/hydradb/issues/115) | Results silently truncate at 1024 rows; continuation cursor returns an empty page | **high** — fails open-looking in an authorization path |
 | [116](https://github.com/hydra-db/hydradb/issues/116) | No batch write path for labelled nodes; sustained write pressure exits the node | medium |
 | [117](https://github.com/hydra-db/hydradb/issues/117) | Five OpenCypher subset constraints, and one silent write failure | low / documentation |

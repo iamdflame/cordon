@@ -262,7 +262,22 @@ export class HydraClient {
     const rel = edge.edgeProps ? cypherProps(edge.edgeProps) : '';
     const relLiteral = rel ? ` {${rel}}` : '';
 
-    return `CREATE (a:${edge.srcLabel} {${src}})-[:${edge.type}${relLiteral}]->(b:${edge.dstLabel} {${dst}})`;
+    /*
+     * MERGE, not CREATE, so a statement is a no-op on replay.
+     *
+     * This is what makes a crashed ingest resumable. The engine documents the
+     * evictor exiting 255 around 80% of a 226k-edge run, and recovery used to
+     * mean restarting the hour - because replaying a CREATE duplicates the
+     * edge. Measured against the running engine: the same one-hop MERGE run
+     * three times yields **1** edge; the same CREATE run three times yields
+     * **3**.
+     *
+     * The engine rejects MERGE on a bare node ("only one-hop edge patterns are
+     * executable") and rejects any MERGE followed by RETURN. Both are fine
+     * here: every statement this builds is exactly a one-hop edge pattern with
+     * no trailing clause. See docs/HYDRADB-ENGINE-NOTES.md.
+     */
+    return `MERGE (a:${edge.srcLabel} {${src}})-[:${edge.type}${relLiteral}]->(b:${edge.dstLabel} {${dst}})`;
   }
 
   /** Boolean reachability via bounded variable-length match. */

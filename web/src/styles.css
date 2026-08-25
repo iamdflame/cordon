@@ -566,3 +566,59 @@ button { font-family: inherit; font-size: inherit; color: inherit; background: n
 
 /* The shell is hidden rather than unmounted, so Ask keeps its state. */
 .shell[hidden] { display: none; }
+
+/* ------------------------------------------------------------ policy view */
+
+.policy-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.policy-field { display: flex; flex-direction: column; gap: 6px; min-width: 230px; }
+
+.policy-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-3);
+}
+
+select.field {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-3) 50%),
+                    linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+  cursor: pointer;
+}
+select.field:disabled { opacity: .45; cursor: not-allowed; }
+
+/* The sentence the whole feature exists to produce. */
+.policy-verdict {
+  margin-top: 20px;
+  padding: 15px 17px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(229, 72, 77, 0.4);
+  background: var(--deny-soft);
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: #ffb3b5;
+  max-width: 70ch;
+}
+.policy-verdict strong { color: #fff; font-weight: 600; }
+.policy-verdict.is-ok {
+  border-color: rgba(61, 154, 99, 0.4);
+  background: var(--grant-soft);
+  color: #9adcb8;
+}
+
+.stat-value.is-deny { color: var(--deny); }
+.pill-warn {
+  background: rgba(255, 201, 92, 0.12);
+  border-color: rgba(255, 201, 92, 0.42);
+  color: var(--trace);
+}

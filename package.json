@@ -35,7 +35,8 @@
     "mcp": "tsx src/mcp/server.ts",
     "bench:latency": "tsx src/bench/latency.ts",
     "bench:engine": "tsx src/bench/engine-probe.ts",
-    "bench:formulations": "tsx src/bench/formulations.ts"
+    "bench:formulations": "tsx src/bench/formulations.ts",
+    "cordon": "tsx src/bin/cordon.ts"
   },
   "dependencies": {
     "@babel/parser": "^7.26.0",
@@ -54,5 +55,8 @@
     "@types/semver": "^7.5.8",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
+  },
+  "bin": {
+    "cordon": "./dist/bin/cordon.js"
   }
 }

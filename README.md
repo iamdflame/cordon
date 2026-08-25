@@ -819,6 +819,75 @@ curl -s localhost:8787/v1/admissible -H 'content-type: application/json' -d '{
 }
 ```
 
+### The SDK
+
+```bash
+npm install @cordon/client
+```
+
+```ts
+import { Cordon } from '@cordon/client';
+const cordon = new Cordon({ url: 'http://localhost:8787' });
+
+// per fact: may this principal see what your retrieval found?
+const { admitted, withheld } = await cordon.admissible(asker, factIds);
+
+// per answer: what an answer leaks is a property of the SET, not its members
+const plan = await cordon.plan(asker, rankedFactIds, { session: true });
+```
+
+Zero dependencies. **It fails closed everywhere**: ids Cordon does not recognise
+are never admitted, `4xx` is never retried (a refusal is a decision, and
+retrying one until it succeeds is the bug this project exists to prevent), and a
+transport failure raises rather than resolving permissively. Ten tests in
+[`test/client.test.ts`](test/client.test.ts) exist to hold that line — one of
+them caught a real bug where a `503` was retried and the final throw wrapped
+away the fact that it meant *"still building"* rather than *"unreachable"*.
+
+[Full reference → `sdk/README.md`](sdk/README.md)
+
+### The console
+
+Four views, because they are four different questions about the same graph:
+
+| view | the question |
+|---|---|
+| **Ask** | did *this answer* disclose correctly? |
+| **Risk surface** | where is this organisation exposed? |
+| **Policy impact** | what would this grant *actually* disclose? |
+| **Disclosure budget** | what has this session given away over time? |
+
+**Policy impact** is the one a document-level system cannot have. Pick a person,
+pick a space, and see — *before applying it* — the derived facts the grant would
+disclose that nobody approved, and the refused claims it puts within rebuilding
+distance. Measured live at ~11ms.
+
+### The CLI
+
+```bash
+cordon doctor                                   # is it up?
+cordon whoami team:billing                      # what may she read?
+cordon check team:billing <fact-id>             # may she see this?
+cordon explain <fact-id> --as team:billing      # why not?
+cordon plan team:leadership <fact-id...>        # is this whole answer safe?
+cordon risk --top 10                            # where are we exposed?
+cordon policy grant team:billing atlas          # what would that grant cost?
+cordon session team:billing                     # what has this session given away?
+```
+
+**Exit codes are meaningful**: `0` admitted, `1` something withheld, `2`
+unreachable. `cordon check` is meant to run in CI — a gate that always exits `0`
+cannot fail a build.
+
+```
+$ cordon explain d:pair:cygnus:handbook --as team:billing
+
+  requires 8 spaces (by traversal, not a stored field)
+    ✓ atlas   ✓ handbook   ✗ borealis   ✗ cygnus  …
+
+  team:billing is missing cordon-demo-fornax, cordon-demo-borealis, cordon-demo-cygnus.
+```
+
 ### The set-level gate
 
 `/v1/admissible` answers the per-fact question. [We showed that is not
@@ -1162,6 +1231,37 @@ derivation the main audit already checks the graph against. `audit:llm` replays
 a committed response cache, so it reproduces byte-for-byte **without an API
 key**; set `OPENAI_API_KEY` only if you want to extend the cache.
 
+### Ingest is resumable, because the engine does not finish
+
+The OSS engine's cache evictor saturates under sustained write pressure and
+**exits 255 around 80% of a 226,357-edge ingest**. That is a reproducible
+~48-minute failure, and until now the recovery was to start the hour again.
+
+Ingest now checkpoints as it writes, so a crash costs the seconds since the last
+flush:
+
+```bash
+npm run build:graph              # checkpointed by default
+npm run build:graph              # crashed? run it again — it resumes
+npm run build:graph -- --no-resume    # old straight-through path
+```
+
+Verified against the running engine, not simulated: killed with `kill -9` at
+3,500 of 26,489 edges, re-run, **skipped exactly those 3,500 and finished**.
+
+This only works because every statement is idempotent, and it turned out ours
+were not — `buildEdgeStatement` emitted `CREATE`, so *any* repeated ingest
+silently multiplied the graph. Duplicate `RESTS_ON` edges are not cosmetic: the
+requirement traversal walks them. Measured on the live engine:
+
+| | 3 runs |
+|---|---|
+| one-hop `MERGE` | **1 edge** |
+| one-hop `CREATE` | **3 edges** |
+
+The guard caught it before resume shipped — `verifyIdempotent` refused to start
+and named the two offending statements. [Correction #12](docs/CORRECTIONS.md).
+
 > **Note on restarting HydraDB.** The local object store does not implement
 > conditional writes, so a container stopped and started over an existing store
 > reads fine and fails *every* write with an opaque error. Restarting is not a
@@ -1291,6 +1391,8 @@ src/
              contested — disclosure-dependent truth
              github — the real-permissions audit and its 404 assertions
              latency | engine-probe | retrievers
+  bin/       cordon — the CLI: doctor, check, plan, explain, risk, policy
+  client/    @cordon/client — the SDK, zero deps, fails closed
   api/       HTTP API: POST /v1/admissible (per fact), POST /v1/plan (per set,
              inference-safe, session-aware), GET /api/risk
   mcp/       MCP server: ask_as, check_admissible
