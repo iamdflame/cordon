@@ -848,7 +848,7 @@ away the fact that it meant *"still building"* rather than *"unreachable"*.
 
 ### The console
 
-Four views, because they are four different questions about the same graph:
+Five views, because they are four different questions about the same graph:
 
 | view | the question |
 |---|---|
@@ -856,6 +856,7 @@ Four views, because they are four different questions about the same graph:
 | **Risk surface** | where is this organisation exposed? |
 | **Policy impact** | what would this grant *actually* disclose? |
 | **Disclosure budget** | what has this session given away over time? |
+| **Audit log** | can we *prove*, later, what we decided? |
 
 **Policy impact** is the one a document-level system cannot have. Pick a person,
 pick a space, and see — *before applying it* — the derived facts the grant would

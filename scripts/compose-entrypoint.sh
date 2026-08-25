@@ -9,6 +9,28 @@
 
 set -euo pipefail
 
+# Wait for the engine before touching it.
+#
+# This used to be a compose healthcheck on the hydradb service, which shelled
+# out to `curl` - a binary that image does not ship. It failed every time, so
+# `docker compose up` never got past "Container is unhealthy". Waiting here
+# works because this image installs curl, and because a service should not
+# depend on what happens to be inside an image it does not build.
+HYDRA_URL="${HYDRA_ENDPOINT:-http://hydradb:8443}"
+echo "==> waiting for HydraDB at ${HYDRA_URL}"
+for attempt in $(seq 1 120); do
+  if curl -sf -o /dev/null "${HYDRA_URL}/" 2>/dev/null \
+    || curl -s -o /dev/null -w '%{http_code}' "${HYDRA_URL}/" 2>/dev/null | grep -qE '^[2-4]'; then
+    echo "==> HydraDB is up (${attempt}s)"
+    break
+  fi
+  if [ "${attempt}" -eq 120 ]; then
+    echo "HydraDB did not come up within 120s" >&2
+    exit 1
+  fi
+  sleep 1
+done
+
 if [ ! -d data/herb/products ]; then
   echo "==> fetching HERB"
   bash scripts/fetch-herb.sh

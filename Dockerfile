@@ -15,5 +15,14 @@ RUN cd web && npm ci
 
 COPY . .
 
+# Bind to all interfaces, or the published port reaches nothing.
+#
+# The API defaults to 127.0.0.1, which is correct on a laptop and wrong in a
+# container: `ports: ['8787:8787']` forwards to the container's external
+# interface, and a server listening only on loopback never sees it. The console
+# worked anyway because Vite proxies /api internally, so the failure was
+# invisible from the browser and total from curl, the SDK, and the CLI.
+ENV HOST=0.0.0.0
+
 EXPOSE 8787 5173
 CMD ["bash", "scripts/compose-entrypoint.sh"]

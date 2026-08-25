@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import RiskView from './views/Risk';
 import SessionView from './views/Session';
 import PolicyView from './views/Policy';
+import AuditView from './views/Audit';
 
 /**
  * The console has three jobs, and they are different questions.
@@ -15,7 +16,7 @@ import PolicyView from './views/Policy';
  * shows the current reply cannot show that, which is most of why one screen was
  * not enough.
  */
-type View = 'ask' | 'risk' | 'policy' | 'session';
+type View = 'ask' | 'risk' | 'policy' | 'session' | 'audit';
 import {
   ask,
   getDerivation,
@@ -167,6 +168,7 @@ export default function App() {
         />
       )}
       {view === 'session' && <SessionView asker={asker} />}
+      {view === 'audit' && <AuditView />}
 
       <div className="shell" hidden={view !== 'ask'}>
         {/* ---------------------------------------------------------- left */}
@@ -554,6 +556,7 @@ function Nav({ view, onChange }: { view: View; onChange: (v: View) => void }) {
     { id: 'risk', label: 'Risk surface', hint: 'where the organisation is exposed' },
     { id: 'policy', label: 'Policy impact', hint: 'what a grant would actually disclose' },
     { id: 'session', label: 'Disclosure budget', hint: 'what a session has given away' },
+    { id: 'audit', label: 'Audit log', hint: 'hash-chained, and it stores no fact text' },
   ];
 
   return (

@@ -622,3 +622,53 @@ select.field:disabled { opacity: .45; cursor: not-allowed; }
   border-color: rgba(255, 201, 92, 0.42);
   color: var(--trace);
 }
+
+/* ------------------------------------------------------------- audit view */
+
+.chain-verdict {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(61, 154, 99, 0.4);
+  background: var(--grant-soft);
+  max-width: 74ch;
+}
+.chain-verdict.is-broken { border-color: rgba(229, 72, 77, 0.45); background: var(--deny-soft); }
+
+.chain-mark {
+  font-size: 25px;
+  line-height: 1;
+  color: var(--grant);
+  font-weight: 700;
+}
+.chain-verdict.is-broken .chain-mark { color: var(--deny); }
+
+.chain-verdict strong { color: var(--text); font-size: 14px; font-weight: 600; }
+.chain-note { font-size: 12px; line-height: 1.6; color: var(--text-2); margin-top: 6px; }
+.chain-head {
+  font-size: 10.5px;
+  color: var(--text-4);
+  margin-top: 8px;
+  letter-spacing: .02em;
+}
+
+.cell-ids { font-size: 11px; color: var(--text-3); max-width: 260px; overflow-wrap: anywhere; }
+
+.tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--line-bright);
+  color: var(--text-2);
+  background: var(--raised);
+}
+.tag-ok { border-color: rgba(61,154,99,.42); color: #7fd1a0; background: var(--grant-soft); }
+.tag-deny { border-color: rgba(229,72,77,.42); color: #ff8f92; background: var(--deny-soft); }
+.tag-warn { border-color: rgba(255,201,92,.42); color: var(--trace); background: rgba(255,201,92,.1); }

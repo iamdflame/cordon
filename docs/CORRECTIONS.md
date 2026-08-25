@@ -335,6 +335,59 @@ Fixed in `src/hydra/client.ts`, `src/cordon/checkpoint.ts`, `test/checkpoint.tes
 
 ---
 
+## 13. The ninety-second path had never worked
+
+**The claim.** The README's first instruction to a judge, sitting above every
+result in the repository:
+
+> ```bash
+> docker compose up        # clean checkout to a working console
+> ```
+
+**What was wrong.** It failed, immediately, on any machine. Not slowly, not
+partially — `ERROR: for cordon  Container is unhealthy`, nothing serving.
+
+**How it was found.** By running it from a genuinely cold state instead of
+assuming. Five separate faults, each hiding the next, so fixing one only ever
+revealed the following one:
+
+1. **`PermissionDenied`.** The engine runs as uid 10001 and cannot write a
+   host-owned bind mount. `scripts/hydra-up.sh` passes
+   `--user $(id -u):$(id -g)`; compose had no equivalent, so the path we told
+   judges to use was the only one nobody had run.
+2. **Still `PermissionDenied`** with a named volume, which is root-owned.
+3. **`UnableToCanonicalize /data/store`.** The engine does not create its own
+   store directory; the script does it with `mkdir -p` and compose did not.
+4. **`NotFound`.** The engine reads its auth token from a file that nothing was
+   writing.
+5. **`curl: not found`.** The healthcheck gating the whole stack shelled out to
+   a binary the engine image does not ship. **It could never have passed**, so
+   `docker compose up` had never once worked end to end.
+
+And a sixth, invisible from a browser: the API binds `127.0.0.1` by default,
+which is right on a laptop and wrong in a container — a published port forwards
+to the external interface and a loopback listener never sees it. The console
+worked anyway, because Vite proxies `/api` internally, so the breakage was
+total from `curl`, the SDK and the CLI while looking fine on screen.
+
+**What it cost.** Nothing yet, and it could have cost everything: a judge who
+cannot get a result in ninety seconds does not go on to read SOUNDNESS.md.
+
+**The fix.** A one-shot `hydra-init` service prepares the volume, the impossible
+healthcheck is gone and the wait moved into the entrypoint — the service that
+actually has the tools — and the container binds `0.0.0.0`. Verified from
+`docker compose down -v`: engine responding in **10s**, full stack in **~9
+minutes** including the sample ingest, all three ports answering from the host,
+and `cordon doctor` green against it.
+
+**The lesson.** The instruction at the top of the README is the one most likely
+to be stale, because the people who wrote it never follow it — they already have
+a running engine. Run your own quickstart, from cold, on a schedule.
+
+Fixed in `docker-compose.yml`, `Dockerfile`, `scripts/compose-entrypoint.sh`.
+
+---
+
 ## Results that are not wins
 
 Reported here rather than left for a reader to notice.
